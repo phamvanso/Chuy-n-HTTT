@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi-VN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="../static/css/style.css">
+    <title>Tải lên tập tin</title>
+</head>
+<body>
+    <main>
+        <div class="container">
+            <h1>Tạo câu hỏi trắc nghiệm</h1>
+            <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+                    <div class="cardupload">
+                        <h3>Tải lên tập tin</h3>
+                        <div class="drop_box">
+                        <header>
+                            <h4>Chọn tập tin tại đây</h4>
+                        </header>
+                        <p>Định dạng tập tin hỗ trợ: PDF, TXT, DOC, DOCX</p>
+                        <p>Dung lượng tối đa: 20MB</p>
+                        <input type="file" name="pdf_file" accept=".pdf,.txt,.doc,.docx" id="fileID" required>
+                        <p id="fileSizeText"></p>
+                        <p>Chọn số lượng câu hỏi muốn tạo?</p>
+                        <input type="number" name="num_questions" value="5" min="1" max="100" required>
+                        </div>
+                        <div class="ans-btn-container">
+                            <button class="answer-btn" type="submit">Tải lên</button>
+                        </div>
+                    </div>
+            </form>
+        </div>
+        <div class="loader-container" id="loaderContainer">
+            <div class="loader"></div>
+        </div>
+    </main>
+    <script>
+        const fileInput = document.getElementById('fileID');
+        const fileSizeText = document.getElementById('fileSizeText');
+
+        function formatBytes(bytes) {
+            if (!bytes) return '';
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)), 10);
+            if (i === 0) return bytes + ' ' + sizes[i];
+            return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
+        }
+
+        fileInput.addEventListener('change', function(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) {
+                fileSizeText.textContent = '';
+                return;
+            }
+            fileSizeText.textContent = 'Dung lượng tệp đã chọn: ' + formatBytes(file.size);
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault(); 
+            document.getElementById('loaderContainer').style.display = 'flex';
+            
+            setTimeout(function() {
+                document.getElementById('uploadForm').submit(); 
+            }, 1000); 
+        });
+    </script>
+
+        
+</body>
+</html>

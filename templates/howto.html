@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi-VN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <title>Câu hỏi trắc nghiệm được tạo</title>
+</head>
+<body>
+    <main>
+        <div class="main-container">
+            <h2>Hướng dẫn sử dụng?</h2>
+            <div class="card-container">
+                <div class="card">
+                    <i class='bx bx-upload'></i>
+                    <h3>Bước 1</h3>
+                    <p>Tải lên tập tin PDF.</p>
+                </div>
+                <div class="card">
+                    <i class='bx bx-hash' ></i>
+                    <h3>Bước 2</h3>
+                    <p>Chọn số câu hỏi bạn muốn tạo.</p>
+                </div>
+                <div class="card">
+                    <i class='bx bx-joystick-button' ></i>
+                    <h3>Bước 3</h3>
+                    <p>Nhấn nút "Tải lên".</p>
+                </div>
+                <div class="card">
+                    <i class='bx bx-shape-circle' ></i>
+                    <h3>Bước 4</h3>
+                    <p>Trả lời câu hỏi và nhận được kết quả khi kết thúc kiểm tra</p>
+                </div>
+            </div>
+            <a class="button-3d" href="{{ url_for('landing') }}">Quay lại</a>
+        </div>
+    </main>
+</body>
+</html>

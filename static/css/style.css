@@ -1,0 +1,489 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
+
+:root{
+    --primary-color: #2d6cdf;
+    --secondary-color: #0f1c2e;
+    --background-color: #eef4ff;
+    --accent-color: #f4b740;
+    --white-color: #ffffff;
+    --surface-color: #ffffff;
+    --soft-surface: #f3f6ff;
+    --ink-color: #0f172a;
+    --muted-ink: #334155;
+}
+
+*{
+    margin: 0;
+    padding: 0;
+}
+
+body{
+    font-family: 'Be Vietnam Pro', sans-serif;
+    color: var(--ink-color);
+    background: #eef4ff;
+    background: radial-gradient(circle at 20% 10%, #f8fbff 0%, #e6eefc 55%, #dbe7fb 100%);
+}
+
+.container {
+    height: 100vh;
+    width: 100%;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+    .container h1{
+        color: var(--ink-color);
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }
+
+    .container form{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+
+    input[type=file] {
+        max-width: 100%;
+        color: var(--ink-color);
+        font-weight: 600;
+        padding: 5px;
+        background-color: var(--soft-surface);
+        border-radius: 8px;
+        border: 2px solid var(--primary-color);
+        margin: 20px;
+        }
+        
+        input[type=file]::file-selector-button {
+            margin-right: 20px;
+            border: 1px solid var(--primary-color);
+            background: #e7efff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: var(--ink-color);
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s ease-in-out;
+        }
+        
+        input[type=file]::file-selector-button:hover {
+            background: var(--primary-color);
+            color: var(--white-color);
+        }
+
+        input[type=number]{
+            width: 250px;
+            max-width: 100%;
+            color: var(--ink-color);
+            font-weight: 700;
+            padding: 15px 5px;
+            background-color: var(--soft-surface);
+            border-radius: 8px;
+            border: 2px solid var(--primary-color);
+            font-size: 1rem;
+        }
+
+        .button-3d {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            outline: none;
+            border: 0;
+            vertical-align: middle;
+            text-decoration: none;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--ink-color);
+            text-transform: uppercase;
+            padding: 1em 1.5em;
+            background: #f3f6ff;
+            border: 2px solid var(--primary-color);
+            border-radius: 0.75em;
+            transform-style: preserve-3d;
+            transition: transform 150ms cubic-bezier(0, 0, 0.58, 1), background 150ms cubic-bezier(0, 0, 0.58, 1);
+            }
+            
+            .button-3d::before {
+            position: absolute;
+            content: '';
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #c9d9ff;
+            border-radius: inherit;
+            transform: translate3d(0, 0.75em, -1em);
+            transition: transform 150ms cubic-bezier(0, 0, 0.58, 1), box-shadow 150ms cubic-bezier(0, 0, 0.58, 1);
+            }
+            
+            .button-3d:hover {
+                background: #dce8ff;
+                transform: translate(0, 0.25em);
+            }
+            
+            .button-3d:hover::before {
+                transform: translate3d(0, 0.5em, -1em);
+            }
+            
+            .button-3d:active {
+                background: #dce8ff;
+                transform: translate(0em, 0.75em);
+            }
+            
+            .button-3d:active::before {
+                box-shadow: 0 0 0 2px var(--primary-color), 0 0 #dce8ff;
+                transform: translate3d(0, 0, -1em);
+            }
+            
+
+    .quizquestions h1{
+        font-family: 'Be Vietnam Pro', sans-serif;
+        display: flex;
+        justify-content: center;
+        color: var(--ink-color);
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }
+
+    .question-container{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+    .question-container .quiz-cards{
+        background-color: var(--white-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: auto;
+        width: 700px;     
+        border-radius: 8px;
+        margin: 30px;
+    }
+    .question-container .quiz-cards .contents{
+        height: 90%;
+        width: 80%;
+        margin: 30px 0 30px 0;
+    }
+
+    li{
+        margin: 20px;
+        list-style-type: none;
+        text-decoration: none;
+    }
+    p{
+        font-family: 'Be Vietnam Pro', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 500;
+        margin: 10px;
+        text-align: center;
+    }
+    img{
+        width: 10%;
+        height: auto;
+    }
+    #img{
+        width: 20%;
+        height: auto;
+    }
+    .img{
+        text-align: center;
+    }
+    #score{
+        text-align: center;
+        font-size: 2rem;
+        font-weight: 500;
+    }
+    .scoretext{
+        color: var(--ink-color);
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }
+    .finalscore{
+        color: var(--ink-color);
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        background-color: #fff4da;
+        border: 2px solid var(--accent-color);
+        border-radius: 10px;
+        padding: 1rem;
+    }
+
+    .numbered-list{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        flex-wrap: wrap;
+        margin: 20px 0 20px 0;
+    }
+    .btn-container{
+        width: 40%;
+        margin: 5px 10px;
+    }
+
+    .answer-btn {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+        outline: none;
+        border: 0;
+        vertical-align: middle;
+        text-decoration: none;
+    /*   font-family: 'Be Vietnam Pro', sans-serif;*/
+        font-weight: 600;
+        color: var(--white-color);
+        text-transform: uppercase;
+        /* padding: 1.25em; */
+        height: 80px;
+        width: 220px;
+        background: var(--primary-color);
+        border: 2px solid #bcd1ff;
+        border-radius: 0.75em;
+        transform-style: preserve-3d;
+        transition: transform 150ms cubic-bezier(0, 0, 0.58, 1), background 150ms cubic-bezier(0, 0, 0.58, 1);
+        margin: 5px;   
+        line-height: 1.5em; 
+        font-size: 1.2rem;
+
+    }
+        
+        .answer-btn::before {
+            position: absolute;
+            content: '';
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #204a99;
+            border-radius: inherit;
+            transform: translate3d(0, 0.75em, -1em);
+            transition: transform 150ms cubic-bezier(0, 0, 0.58, 1), box-shadow 150ms cubic-bezier(0, 0, 0.58, 1);
+        }
+        
+        .answer-btn:hover {
+            background: #3a7df0;
+            color: var(--white-color);
+            transform: translate(0, 0.25em);
+        }
+        
+        .answer-btn:hover::before {
+            transform: translate3d(0, 0.5em, -1em);
+        }
+        
+        .answer-btn:active {
+            background: #3a7df0;
+            transform: translate(0em, 0.75em);
+        }
+        
+        .answer-btn:active::before {
+            box-shadow: 0 0 0 2px #bcd1ff, 0 0 #3a7df0;
+            transform: translate3d(0, 0, -1em);
+        }
+        
+
+
+    .correct {
+        background-color: #28a745; /* Màu xanh cho đáp án đúng */
+        color: #fff; /* Chữ trắng để dễ đọc */
+    }
+    
+    .incorrect {
+        background-color: #dc3545; /* Màu đỏ cho đáp án sai */
+        color: #fff; /* Chữ trắng để dễ đọc */
+    }
+
+            /* CSS cho loader */
+            .loader {
+                width: 40px;
+                height: 20px;
+                background: var(--accent-color);
+                position: absolute;
+                animation: l9-0 1.5s infinite linear;
+            }
+            .loader:before,
+            .loader:after {
+                content: "";
+                position: absolute;
+                background: inherit;
+                bottom: 100%;
+                width: 50%;
+                height: 100%;
+                animation: inherit;
+                animation-name: l9-1;
+            }
+            .loader:before {
+                left: 0;
+                transform-origin: bottom left;
+                --s: -1;
+            }
+            .loader:after {
+                right: 0;
+                transform-origin: bottom right;
+            }
+            @keyframes l9-0 {
+                0%, 10% {transform: translateY(0%) scaleY(1)}
+                49.99% {transform: translateY(-50%) scaleY(1)}
+                50% {transform: translateY(-50%) scaleY(-1)}
+                90%, 100% {transform: translateY(-100%) scaleY(-1)}
+            }
+            @keyframes l9-1 {
+                10%, 90% {transform: rotate(0deg)}
+                50% {transform: rotate(calc(var(--s,1)*180deg))}
+            }
+            /* CSS cho lớp phủ loader */
+            .loader-container {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(246, 247, 251, 0.85);
+                backdrop-filter: blur(5px);
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            }
+
+        .texttop-container{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            flex-direction: column;
+        }
+        .texttopsecond-container{
+            width: 40%;
+            height: auto;
+            background-color: #fff4da;
+            border-radius: 18px;
+            border: 2px solid var(--accent-color);
+        }
+        .texttopsecond-container h1, #score{
+            color: var(--ink-color);
+            margin: 20px;
+        }
+        .return-container{
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .ans-btn-container{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            flex-wrap: wrap;
+            margin: 10px 0 10px 0;
+        }
+
+        .cardupload {
+            border-radius: 10px;
+            box-shadow: 0 5px 10px 0 rgba(0, 0, 0, 0.3);
+            width: 600px;
+            height: auto;
+            background-color: var(--surface-color);
+            padding: 10px 30px 20px;
+                        }
+                        
+                        .cardupload h3 {
+                            font-size: 22px;
+                            font-weight: 700;
+                            text-align: center;
+                            color: var(--secondary-color);
+                            
+                        }
+                        
+                        .drop_box {
+                            margin: 10px 0;
+                            padding: 30px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex-direction: column;
+                            border: 3px dotted #b7c7e8;
+                            background-color: #eef3fb;
+                            border-radius: 5px;
+                        }
+                        
+                        .drop_box h4 {
+                            font-size: 16px;
+                            font-weight: 700;
+                            color: var(--secondary-color);
+                        }
+                        
+                        .drop_box p {
+                            margin-top: 10px;
+                            margin-bottom: 20px;
+                            font-size: 12px;
+                            color: var(--muted-ink);
+                        }
+                        
+                        .btn {
+                            text-decoration: none;
+                            background-color: var(--primary-color);
+                            color: var(--white-color);
+                            padding: 10px 20px;
+                            border: none;
+                            outline: none;
+                            transition: 0.3s;
+                        }
+                        
+                        .btn:hover{
+                            text-decoration: none;
+                            background-color: var(--white-color);
+                            color: var(--primary-color);
+                            padding: 10px 20px;
+                            border: none;
+                            outline: 1px solid var(--primary-color);
+                        }
+                        .form input {
+                            margin: 10px 0;
+                            width: 100%;
+                            background-color: var(--soft-surface);
+                            border: none;
+                            outline: none;
+                            padding: 12px 20px;
+                            border-radius: 4px;
+                        }
+
+                        .option {
+                            font-weight: bold;
+                            margin-right: 8px;
+                        }
+                        
+                        .user-answer {
+                            font-weight: bold;
+                            margin-left: 8px;
+                        }
+                        
+                        .feedback {
+                            color: #1f8f4e;
+                            margin-left: 8px;
+                        }
+                        
+                        .correct-answer {
+                            color: #1f8f4e;
+                            margin-top: 8px;
+                        }
+                        
+                        .feedback-message {
+                            font-size: 20px;
+                            font-weight: bold;
+                            text-align: center;
+                            margin-top: 20px;
+                        }
