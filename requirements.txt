@@ -1,0 +1,5 @@
+Flask==2.3.0
+spacy==3.5.0
+pdfplumber==0.9.0
+nltk==3.8.1
+
