@@ -2,7 +2,7 @@
 <html lang="vi-VN">
 <head>
     <meta charset="UTF-8">
-      <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Câu hỏi trắc nghiệm được tạo</title>
     <script>
@@ -10,11 +10,16 @@
             let score = 0;
             let currentQuestionIndex = 0;
             const totalQuestions = {{ mcqs|length }};
-            const questions = {{ mcqs|tojson }};
+            const questions = {{ mcqs|tojson|safe }};  // Thêm |safe để JSON không bị escape
             const userAnswers = [];
 
             const questionContainer = document.querySelector('.question-container');
             const scoreDisplay = document.getElementById('score');
+
+            if (totalQuestions === 0) {
+                questionContainer.innerHTML = '<p style="text-align:center; color:red; font-size:1.5rem;">Không tạo được câu hỏi nào. Hãy thử file tiếng Anh dài hơn!</p>';
+                return;
+            }
 
             function displayQuestion(index) {
                 if (index >= totalQuestions) {
@@ -24,15 +29,22 @@
                 }
 
                 const question = questions[index];
+                const questionNumber = question[0];          // số thứ tự (1,2,3...)
+                const stem = question[1][0];                  // câu hỏi với chỗ trống
+                const choices = question[1][1];               // mảng 4 đáp án
+                const correctAnswer = question[1][2];         // 'A', 'B', 'C' hoặc 'D'
+
                 questionContainer.innerHTML = `
                     <div class="quiz-cards">
                         <div class="contents">
-                            <p>Câu ${index + 1} trong ${totalQuestions}</p>
-                            <p>${question[1][0]}</p>
+                            <p>Câu ${questionNumber} trong ${totalQuestions}</p>
+                            <p>${stem}</p>
                             <ol class="numbered-list">
-                                ${question[1][1].map((option, i) => `
+                                ${choices.map((option, i) => `
                                     <div class="btn-container">
-                                        <button class="answer-btn" data-option="${String.fromCharCode(65 + i)}" data-correct-answer="${question[1][2]}">
+                                        <button class="answer-btn"
+                                                data-option="${String.fromCharCode(65 + i)}"
+                                                data-correct-answer="${correctAnswer}">
                                             ${String.fromCharCode(65 + i)}. ${option}
                                         </button>
                                     </div>
@@ -49,66 +61,71 @@
                     <p class="finalscore">Điểm cuối cùng: ${score}/${totalQuestions * 10}</p>
                     <div class="results-container">
                 `;
+
                 userAnswers.forEach((answer, index) => {
                     const question = questions[index];
+                    const stem = question[1][0];
+                    const choices = question[1][1];
+                    const correctAnswer = question[1][2];
+
                     resultsHTML += `
                         <div class="quiz-cards">
                             <div class="contents">
-                                <p>${question[1][0]}</p>
+                                <p>${stem}</p>
                                 <ol class="numbered-list">
-                                    ${question[1][1].map((option, i) => `
-                                        <div class="btn-container">
-                                            <button class="answer-btn ${answer.selectedOption === String.fromCharCode(65 + i) ? (answer.isCorrect ? 'correct' : 'incorrect') : ''}" data-option="${String.fromCharCode(65 + i)}">
-                                                ${String.fromCharCode(65 + i)}. ${option}
-                                            </button>
-                                        </div>
-                                    `).join('')}
+                                    ${choices.map((option, i) => {
+                                        const letter = String.fromCharCode(65 + i);
+                                        let className = '';
+                                        if (answer.selectedOption === letter) {
+                                            className = answer.isCorrect ? 'correct' : 'incorrect';
+                                        }
+                                        return `
+                                            <div class="btn-container">
+                                                <button class="answer-btn ${className}" data-option="${letter}">
+                                                    ${letter}. ${option}
+                                                </button>
+                                            </div>
+                                        `;
+                                    }).join('')}
                                 </ol>
                                 <p>Câu trả lời của bạn: ${answer.selectedOption} ${answer.isCorrect ? '(Đúng)' : '(Sai)'}</p>
-                                <p>Đáp án đúng: ${answer.correctAnswer}</p>
+                                <p>Đáp án đúng: ${correctAnswer}</p>
                             </div>
                         </div>
                     `;
                 });
+
                 resultsHTML += `</div>`;
 
-                // Tính tỉ lệ điểm
+                // Tính phần trăm và thông điệp
                 const percentageScore = (score / (totalQuestions * 10)) * 100;
-
-                // Chọn thông điệp theo tỉ lệ điểm
                 let message = '';
-                if (percentageScore === 100) {
-                    message = "Chúc mừng! Bạn đã đạt 100%! Hoàn hảo!";
-                } else if (percentageScore >= 90) {
-                    message = "Xuất sắc! Bạn đã đạt trên 90%!";
-                } else if (percentageScore >= 80) {
-                    message = "Làm tốt lắm! Bạn đã đạt trên 80%!";
-                } else if (percentageScore >= 70) {
-                    message = "Công việc tốt! Bạn đã đạt trên 70%!";
-                } else if (percentageScore >= 60) {
-                    message = "Làm việc tốt! Bạn đã đạt trên 60%!";
-                } else {
-                    message = "Bạn có thể làm tốt hơn lần sau. Hãy tiếp tục luyện tập!";
+                if (percentageScore === 100) message = "Chúc mừng! Bạn đã đạt 100%! Hoàn hảo!";
+                else if (percentageScore >= 90) message = "Xuất sắc! Bạn đã đạt trên 90%!";
+                else if (percentageScore >= 80) message = "Làm tốt lắm! Bạn đã đạt trên 80%!";
+                else if (percentageScore >= 70) message = "Công việc tốt! Bạn đã đạt trên 70%!";
+                else if (percentageScore >= 60) message = "Làm việc tốt! Bạn đã đạt trên 60%!";
+                else message = "Bạn có thể làm tốt hơn lần sau. Hãy tiếp tục luyện tập!";
 
-                }
-
-                resultsHTML += `<p>${message}</p>`;
+                resultsHTML += `<p style="text-align:center; font-size:1.4rem; margin-top:20px;">${message}</p>`;
 
                 questionContainer.innerHTML = resultsHTML;
             }
 
-
             function hideScore() {
-                scoreDisplay.style.display = 'none';
+                if (scoreDisplay) scoreDisplay.style.display = 'none';
             }
 
+            // Bắt đầu hiển thị câu đầu tiên
             displayQuestion(currentQuestionIndex);
 
+            // Xử lý click đáp án
             questionContainer.addEventListener('click', function(event) {
                 if (event.target.classList.contains('answer-btn')) {
                     const selectedOption = event.target.dataset.option;
                     const correctAnswer = event.target.dataset.correctAnswer;
                     const isCorrect = selectedOption === correctAnswer;
+
                     userAnswers.push({
                         selectedOption,
                         correctAnswer,
@@ -124,11 +141,15 @@
                         event.target.textContent += ' (Sai)';
                     }
 
-                    scoreDisplay.textContent = `Điểm: ${score}/${totalQuestions * 10}`;
+                    if (scoreDisplay) {
+                        scoreDisplay.textContent = `Điểm: ${score}/${totalQuestions * 10}`;
+                    }
+
+                    // Chuyển câu tiếp theo sau 2 giây
                     setTimeout(() => {
                         currentQuestionIndex++;
                         displayQuestion(currentQuestionIndex);
-                    }, 2000);  // Có thể điều chỉnh thời gian nếu cần
+                    }, 2000);
                 }
             });
         });
@@ -139,15 +160,16 @@
         <div class="texttop-container">
             <div class="texttopsecond-container">
                 <h1>Câu hỏi được tạo</h1>
-                {% if mcqs %}
-                <div id="score">Điểm: 0/{{ mcqs|length * 10 }}</div>
+                {% if mcqs and mcqs|length > 0 %}
+                    <div id="score">Điểm: 0/{{ mcqs|length * 10 }}</div>
+                {% endif %}
             </div>
         </div>
         <div class="question-container">
-            <!-- Nội dung câu hỏi sẽ hiện ở đây -->
+            <!-- Câu hỏi sẽ được JS render vào đây -->
         </div>
-        {% else %}
-            <p>Không tạo được câu hỏi.</p>
+        {% if not mcqs or mcqs|length == 0 %}
+            <p style="text-align:center; color:red; font-size:1.5rem;">Không tạo được câu hỏi. Hãy thử file tiếng Anh dài hơn!</p>
         {% endif %}
     </div>
     <div class="return-container">
