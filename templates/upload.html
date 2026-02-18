@@ -8,6 +8,7 @@
 </head>
 <body>
     <main>
+        
         <div class="container">
             <h1>Tạo câu hỏi trắc nghiệm</h1>
             <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
@@ -25,8 +26,10 @@
                         <input type="number" name="num_questions" value="5" min="1" max="100" required>
                         </div>
                         <div class="ans-btn-container">
+                            <a href="/" class="answer-btn" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">Quay lại</a>
                             <button class="answer-btn" type="submit">Tải lên</button>
                         </div>
+                        
                     </div>
             </form>
         </div>
