@@ -470,10 +470,6 @@ body{
             background: var(--soft-surface);
         }
         
-        .btn-back svg {
-            width: 20px;
-            height: 20px;
-        }
         
         .btn-retry {
             display: inline-flex;

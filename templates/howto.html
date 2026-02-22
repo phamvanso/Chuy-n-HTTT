@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <title>Hướng dẫn sử dụng</title>
     <style>
         body.howto-page {
@@ -59,9 +58,17 @@
             border-color: var(--primary-light);
         }
         
-        .step-card i {
-            font-size: 2.5rem;
-            color: var(--primary-color);
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: var(--white-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
             margin-bottom: 12px;
         }
         
@@ -109,32 +116,27 @@
         <h2 class="howto-title">Hướng dẫn sử dụng</h2>
         <div class="steps-container">
             <div class="step-card">
-                <i class='bx bx-upload'></i>
-                <h3>Bước 1</h3>
+                <div class="step-number">1</div>
+                <h3>Tải file</h3>
                 <p>Tải lên tập tin PDF, TXT hoặc DOCX</p>
             </div>
             <div class="step-card">
-                <i class='bx bx-hash'></i>
-                <h3>Bước 2</h3>
+                <div class="step-number">2</div>
+                <h3>Chọn số câu</h3>
                 <p>Chọn số câu hỏi bạn muốn tạo</p>
             </div>
             <div class="step-card">
-                <i class='bx bx-upload'></i>
-                <h3>Bước 3</h3>
+                <div class="step-number">3</div>
+                <h3>Xử lý</h3>
                 <p>Nhấn nút "Tải lên" để xử lý</p>
             </div>
             <div class="step-card">
-                <i class='bx bx-check-circle'></i>
-                <h3>Bước 4</h3>
+                <div class="step-number">4</div>
+                <h3>Làm bài</h3>
                 <p>Trả lời câu hỏi và xem kết quả</p>
             </div>
         </div>
-        <a class="btn-back-howto" href="{{ url_for('landing') }}">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Quay lại
-        </a>
+        <a class="btn-back-howto" href="{{ url_for('landing') }}">Quay lại</a>
     </main>
 </body>
 </html>

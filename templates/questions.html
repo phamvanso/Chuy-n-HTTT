@@ -55,7 +55,7 @@
                 questionContainer.innerHTML = `
                     <div class="quiz-cards">
                         <div class="contents">
-                            <span class="question-number">📝 Câu ${questionNumber} / ${totalQuestions}</span>
+                            <span class="question-number">Câu ${questionNumber} / ${totalQuestions}</span>
                             <p class="question-text">${stem}</p>
                             <ol class="numbered-list">
                                 ${choices.map((option, i) => `
@@ -86,51 +86,51 @@
                 if (percentageScore === 100) {
                     gradeClass = 'grade-perfect';
                     gradeText = 'S';
-                    message = "🎉 Hoàn hảo! Bạn là thiên tài!";
+                    message = "Hoàn hảo! Bạn là thiên tài!";
                 } else if (percentageScore >= 90) {
                     gradeClass = 'grade-excellent';
                     gradeText = 'A+';
-                    message = "🌟 Xuất sắc! Kiến thức vững vàng!";
+                    message = "Xuất sắc! Kiến thức vững vàng!";
                 } else if (percentageScore >= 80) {
                     gradeClass = 'grade-good';
                     gradeText = 'A';
-                    message = "👏 Rất tốt! Tiếp tục phát huy!";
+                    message = "Rất tốt! Tiếp tục phát huy!";
                 } else if (percentageScore >= 70) {
                     gradeClass = 'grade-fair';
                     gradeText = 'B';
-                    message = "👍 Khá tốt! Cố gắng thêm nhé!";
+                    message = "Khá tốt! Cố gắng thêm nhé!";
                 } else if (percentageScore >= 60) {
                     gradeClass = 'grade-pass';
                     gradeText = 'C';
-                    message = "📚 Đạt yêu cầu. Hãy ôn tập thêm!";
+                    message = "Đạt yêu cầu. Hãy ôn tập thêm!";
                 } else {
                     gradeClass = 'grade-fail';
                     gradeText = 'D';
-                    message = "💪 Cần cố gắng hơn. Đừng bỏ cuộc!";
+                    message = "Cần cố gắng hơn. Đừng bỏ cuộc!";
                 }
                 
                 let resultsHTML = `
                     <div class="results-summary">
-                        <p class="scoretext">🎯 Kết quả bài kiểm tra</p>
+                        <p class="scoretext">Kết quả bài kiểm tra</p>
                         <div class="grade-circle ${gradeClass}">
                             <span class="grade-letter">${gradeText}</span>
                             <span class="grade-percent">${finalScore}%</span>
                         </div>
                         <div class="score-breakdown">
                             <div class="score-item">
-                                <span class="score-label">✅ Số câu đúng</span>
+                                <span class="score-label">Số câu đúng</span>
                                 <span class="score-value correct">${correctCount}</span>
                             </div>
                             <div class="score-item">
-                                <span class="score-label">❌ Số câu sai</span>
+                                <span class="score-label">Số câu sai</span>
                                 <span class="score-value incorrect">${incorrectCount}</span>
                             </div>
                             <div class="score-item">
-                                <span class="score-label">📊 Tổng số câu</span>
+                                <span class="score-label">Tổng số câu</span>
                                 <span class="score-value">${totalQuestions}</span>
                             </div>
                             <div class="score-item">
-                                <span class="score-label">🏆 Điểm số</span>
+                                <span class="score-label">Điểm số</span>
                                 <span class="score-value">${correctCount * 10}/${totalQuestions * 10}</span>
                             </div>
                         </div>
@@ -144,7 +144,7 @@
                     const stem = question[1][0];
                     const choices = question[1][1];
                     const correctAnswer = question[1][2];
-                    const statusIcon = answer.isCorrect ? '✅' : '❌';
+                    const statusIcon = answer.isCorrect ? '[Đúng]' : '[Sai]';
 
                     resultsHTML += `
                         <div class="quiz-cards ${answer.isCorrect ? 'card-correct' : 'card-incorrect'}">
@@ -248,7 +248,7 @@
             </div>
             {% if warning_message %}
             <div class="warning-banner" style="background: #fef3c7; color: #92400e; padding: 12px 20px; border-radius: 10px; margin-top: 15px; max-width: 500px; text-align: center; font-weight: 500;">
-                ⚠️ {{ warning_message }}
+                {{ warning_message }}
             </div>
             {% endif %}
         </div>
@@ -260,24 +260,9 @@
         {% endif %}
     </div>
     <div class="return-container">
-        <a class="btn-back" href="/">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Trang chủ
-        </a>
-        <button class="btn-retry" onclick="resetQuiz()">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Làm lại
-        </button>
-        <a class="btn-new" href="/upload_page">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            File mới
-        </a>
+        <a class="btn-back" href="/">Trang chủ</a>
+        <button class="btn-retry" onclick="resetQuiz()">Làm lại</button>
+        <a class="btn-new" href="/upload_page">File mới</a>
     </div>
 </body>
 </html>

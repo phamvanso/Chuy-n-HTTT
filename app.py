@@ -31,9 +31,9 @@ if not os.path.exists(TEMP_TEXT_FOLDER):
 try:
     nlp = spacy.load('en_core_web_sm')
     nlp.max_length = 2000000
-    print("✅ Đã tải mô hình xử lý ngôn ngữ thành công")
+    print("[OK] Da tai mo hinh xu ly ngon ngu thanh cong")
 except OSError:
-    print("❌ Lỗi: Không tìm thấy mô hình ngôn ngữ. Vui lòng chạy lệnh: python -m spacy download en_core_web_sm")
+    print("[LOI] Khong tim thay mo hinh ngon ngu. Vui long chay lenh: python -m spacy download en_core_web_sm")
     nlp = None
 
 # Giới hạn độ dài văn bản để tránh quá tải bộ nhớ
@@ -63,7 +63,7 @@ def extract_text(file_path, extension):
         return text.strip()
 
     except Exception as e:
-        print(f"❌ Lỗi khi trích xuất văn bản từ {file_path}: {e}")
+        print(f"[LOI] Loi khi trich xuat van ban tu {file_path}: {e}")
         return ""
 
 
@@ -80,7 +80,7 @@ def get_synonyms(word):
 
 def generate_mcqs(text, num_questions=5):
     if not text or not nlp:
-        print("❌ Không có văn bản đầu vào hoặc mô hình chưa được tải.")
+        print("[LOI] Khong co van ban dau vao hoac mo hinh chua duoc tai.")
         return []
 
     doc = nlp(text)
@@ -90,10 +90,10 @@ def generate_mcqs(text, num_questions=5):
         if 15 <= len(sent.text.strip()) <= 300
     ]
 
-    print(f"🔍 Tìm thấy {len(sentences)} câu hợp lệ.")
+    print(f"[INFO] Tim thay {len(sentences)} cau hop le.")
 
     if not sentences:
-        print("❌ Không có câu hợp lệ sau khi lọc.")
+        print("[LOI] Khong co cau hop le sau khi loc.")
         return []
 
     mcqs = []
@@ -152,12 +152,12 @@ def generate_mcqs(text, num_questions=5):
         correct_letter = chr(65 + choices.index(subject))
 
         mcqs.append((question_stem, choices, correct_letter))
-        print(f"✅ Đã tạo câu hỏi trắc nghiệm: {question_stem[:60]}... (đáp án đúng: {correct_letter})")
+        print(f"[OK] Da tao cau hoi: {question_stem[:60]}... (dap an: {correct_letter})")
 
-    print(f"📊 Tổng số câu hỏi đã tạo: {len(mcqs)} / yêu cầu: {num_questions}")
+    print(f"[INFO] Tong so cau hoi da tao: {len(mcqs)} / yeu cau: {num_questions}")
     
     if len(mcqs) < num_questions:
-        print(f"⚠️ Chỉ tạo được {len(mcqs)} câu do văn bản không đủ nội dung phù hợp.")
+        print(f"[CANH BAO] Chi tao duoc {len(mcqs)} cau do van ban khong du noi dung phu hop.")
     
     return mcqs
 
