@@ -5,36 +5,136 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <title>Câu hỏi trắc nghiệm được tạo</title>
+    <title>Hướng dẫn sử dụng</title>
+    <style>
+        body.howto-page {
+            padding: 40px 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        body.howto-page main {
+            width: 95%;
+            max-width: 900px;
+            padding: 40px 30px;
+        }
+        
+        .howto-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--ink-color);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 600px) {
+            .steps-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .step-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 25px 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.15);
+            border-color: var(--primary-light);
+        }
+        
+        .step-card i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+        }
+        
+        .step-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--ink-color);
+            margin: 0 0 8px 0;
+        }
+        
+        .step-card p {
+            font-size: 0.9rem;
+            color: var(--muted-ink);
+            text-align: center;
+            margin: 0;
+            width: 100%;
+            font-weight: 500;
+        }
+        
+        .btn-back-howto {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: var(--white-color);
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-back-howto:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+        }
+    </style>
 </head>
-<body>
+<body class="howto-page">
     <main>
-        <div class="main-container">
-            <h2>Hướng dẫn sử dụng?</h2>
-            <div class="card-container">
-                <div class="card">
-                    <i class='bx bx-upload'></i>
-                    <h3>Bước 1</h3>
-                    <p>Tải lên tập tin PDF.</p>
-                </div>
-                <div class="card">
-                    <i class='bx bx-hash' ></i>
-                    <h3>Bước 2</h3>
-                    <p>Chọn số câu hỏi bạn muốn tạo.</p>
-                </div>
-                <div class="card">
-                    <i class='bx bx-joystick-button' ></i>
-                    <h3>Bước 3</h3>
-                    <p>Nhấn nút "Tải lên".</p>
-                </div>
-                <div class="card">
-                    <i class='bx bx-shape-circle' ></i>
-                    <h3>Bước 4</h3>
-                    <p>Trả lời câu hỏi và nhận được kết quả khi kết thúc kiểm tra</p>
-                </div>
+        <h2 class="howto-title">Hướng dẫn sử dụng</h2>
+        <div class="steps-container">
+            <div class="step-card">
+                <i class='bx bx-upload'></i>
+                <h3>Bước 1</h3>
+                <p>Tải lên tập tin PDF, TXT hoặc DOCX</p>
             </div>
-            <a class="button-3d" href="{{ url_for('landing') }}">Quay lại</a>
+            <div class="step-card">
+                <i class='bx bx-hash'></i>
+                <h3>Bước 2</h3>
+                <p>Chọn số câu hỏi bạn muốn tạo</p>
+            </div>
+            <div class="step-card">
+                <i class='bx bx-upload'></i>
+                <h3>Bước 3</h3>
+                <p>Nhấn nút "Tải lên" để xử lý</p>
+            </div>
+            <div class="step-card">
+                <i class='bx bx-check-circle'></i>
+                <h3>Bước 4</h3>
+                <p>Trả lời câu hỏi và xem kết quả</p>
+            </div>
         </div>
+        <a class="btn-back-howto" href="{{ url_for('landing') }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Quay lại
+        </a>
     </main>
 </body>
 </html>

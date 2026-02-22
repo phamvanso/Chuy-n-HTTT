@@ -1,15 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
 
 :root{
-    --primary-color: #2d6cdf;
-    --secondary-color: #0f1c2e;
-    --background-color: #eef4ff;
-    --accent-color: #f4b740;
+    --primary-color: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #a5b4fc;
+    --secondary-color: #0f172a;
+    --background-color: #f8fafc;
+    --accent-color: #f59e0b;
+    --accent-light: #fef3c7;
+    --success-color: #10b981;
+    --success-light: #d1fae5;
+    --error-color: #ef4444;
+    --error-light: #fee2e2;
     --white-color: #ffffff;
     --surface-color: #ffffff;
-    --soft-surface: #f3f6ff;
-    --ink-color: #0f172a;
-    --muted-ink: #334155;
+    --soft-surface: #f1f5f9;
+    --ink-color: #1e293b;
+    --muted-ink: #64748b;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 *{
@@ -20,8 +30,8 @@
 body{
     font-family: 'Be Vietnam Pro', sans-serif;
     color: var(--ink-color);
-    background: #eef4ff;
-    background: radial-gradient(circle at 20% 10%, #f8fbff 0%, #e6eefc 55%, #dbe7fb 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
 }
 
 .container {
@@ -34,9 +44,10 @@ body{
 }
 
     .container h1{
-        color: var(--ink-color);
-        font-size: 2.5rem;
-        margin-bottom: 20px;
+        color: var(--white-color);
+        font-size: 2.2rem;
+        margin-bottom: 25px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
 
     .container form{
@@ -89,57 +100,45 @@ body{
 
         .button-3d {
             position: relative;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             cursor: pointer;
             outline: none;
-            border: 0;
+            border: none;
             vertical-align: middle;
             text-decoration: none;
             font-family: 'Be Vietnam Pro', sans-serif;
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            color: var(--ink-color);
+            color: var(--white-color);
             text-transform: uppercase;
-            padding: 1em 1.5em;
-            background: #f3f6ff;
-            border: 2px solid var(--primary-color);
-            border-radius: 0.75em;
-            transform-style: preserve-3d;
-            transition: transform 150ms cubic-bezier(0, 0, 0.58, 1), background 150ms cubic-bezier(0, 0, 0.58, 1);
-            }
-            
-            .button-3d::before {
-            position: absolute;
-            content: '';
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #c9d9ff;
-            border-radius: inherit;
-            transform: translate3d(0, 0.75em, -1em);
-            transition: transform 150ms cubic-bezier(0, 0, 0.58, 1), box-shadow 150ms cubic-bezier(0, 0, 0.58, 1);
+            letter-spacing: 0.5px;
+            padding: 1em 2em;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            transition: all 0.3s ease;
             }
             
             .button-3d:hover {
-                background: #dce8ff;
-                transform: translate(0, 0.25em);
-            }
-            
-            .button-3d:hover::before {
-                transform: translate3d(0, 0.5em, -1em);
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
             }
             
             .button-3d:active {
-                background: #dce8ff;
-                transform: translate(0em, 0.75em);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
             }
             
-            .button-3d:active::before {
-                box-shadow: 0 0 0 2px var(--primary-color), 0 0 #dce8ff;
-                transform: translate3d(0, 0, -1em);
+            .button-3d.secondary {
+                background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+                box-shadow: 0 4px 15px rgba(100, 116, 139, 0.4);
+            }
+            
+            .button-3d.secondary:hover {
+                box-shadow: 0 8px 25px rgba(100, 116, 139, 0.5);
             }
             
 
@@ -166,14 +165,34 @@ body{
         justify-content: center;
         align-items: center;
         height: auto;
-        width: 700px;     
-        border-radius: 8px;
-        margin: 30px;
+        width: 90%;
+        max-width: 700px;     
+        border-radius: 20px;
+        margin: 20px;
+        box-shadow: var(--shadow-lg);
     }
     .question-container .quiz-cards .contents{
         height: 90%;
-        width: 80%;
-        margin: 30px 0 30px 0;
+        width: 90%;
+        margin: 25px 0;
+    }
+    
+    .question-number {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        color: var(--white-color);
+        padding: 8px 18px;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+    
+    .question-text {
+        font-size: 1.2rem;
+        line-height: 1.6;
+        color: var(--ink-color);
+        margin-bottom: 20px;
     }
 
     li{
@@ -201,22 +220,69 @@ body{
     }
     #score{
         text-align: center;
-        font-size: 2rem;
-        font-weight: 500;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+        padding: 12px 24px;
+        border-radius: 50px;
+        display: inline-block;
     }
     .scoretext{
         color: var(--ink-color);
-        font-size: 2.5rem;
-        margin-bottom: 20px;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 15px;
     }
     .finalscore{
+        color: var(--white-color);
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 25px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        border-radius: 16px;
+        padding: 1.2rem 2rem;
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+    }
+    
+    .score-breakdown {
+        background: var(--white-color);
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 400px;
+        box-shadow: var(--shadow-md);
+    }
+    
+    .score-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--soft-surface);
+        font-size: 1.1rem;
+    }
+    
+    .score-item:last-child {
+        border-bottom: none;
+        font-weight: 700;
+        color: var(--primary-dark);
+    }
+    
+    .score-label {
+        color: var(--muted-ink);
+    }
+    
+    .score-value {
+        font-weight: 600;
         color: var(--ink-color);
-        font-size: 2.5rem;
-        margin-bottom: 20px;
-        background-color: #fff4da;
-        border: 2px solid var(--accent-color);
-        border-radius: 10px;
-        padding: 1rem;
+    }
+    
+    .score-value.correct {
+        color: var(--success-color);
+    }
+    
+    .score-value.incorrect {
+        color: var(--error-color);
     }
 
     .numbered-list{
@@ -234,75 +300,65 @@ body{
 
     .answer-btn {
         position: relative;
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         cursor: pointer;
         outline: none;
-        border: 0;
+        border: 2px solid var(--primary-light);
         vertical-align: middle;
         text-decoration: none;
-    /*   font-family: 'Be Vietnam Pro', sans-serif;*/
+        font-family: 'Be Vietnam Pro', sans-serif;
         font-weight: 600;
         color: var(--white-color);
-        text-transform: uppercase;
-        /* padding: 1.25em; */
-        height: 80px;
-        width: 220px;
-        background: var(--primary-color);
-        border: 2px solid #bcd1ff;
-        border-radius: 0.75em;
-        transform-style: preserve-3d;
-        transition: transform 150ms cubic-bezier(0, 0, 0.58, 1), background 150ms cubic-bezier(0, 0, 0.58, 1);
-        margin: 5px;   
-        line-height: 1.5em; 
-        font-size: 1.2rem;
-
+        text-transform: none;
+        min-height: 70px;
+        width: 100%;
+        max-width: 260px;
+        padding: 15px 20px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        border-radius: 14px;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        transition: all 0.25s ease;
+        margin: 8px;   
+        line-height: 1.4; 
+        font-size: 1rem;
+        text-align: center;
     }
         
-        .answer-btn::before {
-            position: absolute;
-            content: '';
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #204a99;
-            border-radius: inherit;
-            transform: translate3d(0, 0.75em, -1em);
-            transition: transform 150ms cubic-bezier(0, 0, 0.58, 1), box-shadow 150ms cubic-bezier(0, 0, 0.58, 1);
-        }
-        
         .answer-btn:hover {
-            background: #3a7df0;
-            color: var(--white-color);
-            transform: translate(0, 0.25em);
-        }
-        
-        .answer-btn:hover::before {
-            transform: translate3d(0, 0.5em, -1em);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+            background: linear-gradient(135deg, #7c7ff7 0%, var(--primary-color) 100%);
         }
         
         .answer-btn:active {
-            background: #3a7df0;
-            transform: translate(0em, 0.75em);
+            transform: translateY(-2px) scale(1.01);
         }
-        
-        .answer-btn:active::before {
-            box-shadow: 0 0 0 2px #bcd1ff, 0 0 #3a7df0;
-            transform: translate3d(0, 0, -1em);
-        }
-        
 
-
-    .correct {
-        background-color: #28a745; /* Màu xanh cho đáp án đúng */
-        color: #fff; /* Chữ trắng để dễ đọc */
+    .answer-btn.correct {
+        background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+        border-color: var(--success-color);
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+        animation: pulse-success 0.5s ease;
     }
     
-    .incorrect {
-        background-color: #dc3545; /* Màu đỏ cho đáp án sai */
-        color: #fff; /* Chữ trắng để dễ đọc */
+    .answer-btn.incorrect {
+        background: linear-gradient(135deg, var(--error-color) 0%, #dc2626 100%);
+        border-color: var(--error-color);
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+        animation: shake 0.5s ease;
+    }
+    
+    @keyframes pulse-success {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
     }
 
             /* CSS cho loader */
@@ -364,22 +420,105 @@ body{
             align-items: center;
             width: 100%;
             flex-direction: column;
+            padding: 30px 20px;
         }
         .texttopsecond-container{
-            width: 40%;
+            width: 90%;
+            max-width: 500px;
             height: auto;
-            background-color: #fff4da;
-            border-radius: 18px;
-            border: 2px solid var(--accent-color);
+            background: var(--white-color);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            padding: 10px 20px;
         }
-        .texttopsecond-container h1, #score{
+        .texttopsecond-container h1{
             color: var(--ink-color);
-            margin: 20px;
+            margin: 15px 20px;
+            font-size: 1.8rem;
+        }
+        .texttopsecond-container #score{
+            margin: 15px 20px;
         }
         .return-container{
-            margin: 20px;
+            margin: 30px 20px;
+            padding-bottom: 30px;
             display: flex;
             justify-content: center;
+            gap: 15px;
+        }
+        
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: var(--white-color);
+            color: var(--ink-color);
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-back:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+            background: var(--soft-surface);
+        }
+        
+        .btn-back svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .btn-retry {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, var(--accent-color) 0%, #d97706 100%);
+            color: var(--white-color);
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-retry:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
+        }
+        
+        .btn-new {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: var(--white-color);
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-new:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
         }
 
         .ans-btn-container{
@@ -388,16 +527,46 @@ body{
             align-items: center;
             width: 100%;
             flex-wrap: wrap;
-            margin: 10px 0 10px 0;
+            margin: 20px 0 10px 0;
+            gap: 15px;
+        }
+        
+        .btn-upload {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: var(--white-color);
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-upload:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+        }
+        
+        .btn-upload:active {
+            transform: translateY(-1px);
         }
 
         .cardupload {
-            border-radius: 10px;
-            box-shadow: 0 5px 10px 0 rgba(0, 0, 0, 0.3);
-            width: 600px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            width: 90%;
+            max-width: 550px;
             height: auto;
             background-color: var(--surface-color);
-            padding: 10px 30px 20px;
+            padding: 25px 35px 30px;
                         }
                         
                         .cardupload h3 {
@@ -409,15 +578,21 @@ body{
                         }
                         
                         .drop_box {
-                            margin: 10px 0;
+                            margin: 15px 0;
                             padding: 30px;
                             display: flex;
                             align-items: center;
                             justify-content: center;
                             flex-direction: column;
-                            border: 3px dotted #b7c7e8;
-                            background-color: #eef3fb;
-                            border-radius: 5px;
+                            border: 2px dashed var(--primary-light);
+                            background: linear-gradient(135deg, #f5f7ff 0%, #eef2ff 100%);
+                            border-radius: 16px;
+                            transition: all 0.3s ease;
+                        }
+                        
+                        .drop_box:hover {
+                            border-color: var(--primary-color);
+                            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
                         }
                         
                         .drop_box h4 {
@@ -487,3 +662,102 @@ body{
                             text-align: center;
                             margin-top: 20px;
                         }
+
+    .results-summary {
+        text-align: center;
+        padding: 30px 20px;
+        background: var(--white-color);
+        border-radius: 20px;
+        margin: 20px;
+        max-width: 500px;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .grade-circle {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 25px auto;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    
+    .grade-letter {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--white-color);
+    }
+    
+    .grade-percent {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: rgba(255,255,255,0.9);
+    }
+    
+    .grade-perfect {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    }
+    
+    .grade-excellent {
+        background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    }
+    
+    .grade-good {
+        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    }
+    
+    .grade-fair {
+        background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+    }
+    
+    .grade-pass {
+        background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+    }
+    
+    .grade-fail {
+        background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    }
+    
+    .result-message {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--ink-color);
+        margin-top: 20px;
+        padding: 15px;
+        background: var(--soft-surface);
+        border-radius: 12px;
+    }
+    
+    .results-container {
+        width: 100%;
+        max-width: 750px;
+        margin: 0 auto;
+    }
+    
+    .quiz-cards.card-correct {
+        border-left: 5px solid var(--success-color);
+    }
+    
+    .quiz-cards.card-incorrect {
+        border-left: 5px solid var(--error-color);
+    }
+    
+    .progress-bar-container {
+        width: 100%;
+        max-width: 500px;
+        height: 8px;
+        background: var(--soft-surface);
+        border-radius: 10px;
+        margin: 15px auto;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }

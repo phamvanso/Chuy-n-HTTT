@@ -2,12 +2,21 @@
 <html lang="vi-VN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="../static/css/style.css">
     <title>Tải lên tập tin</title>
 </head>
 <body>
     <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}" style="background-color: {% if category == 'error' %}#f8d7da{% else %}#d4edda{% endif %}; color: {% if category == 'error' %}#721c24{% else %}#155724{% endif %}; padding: 12px 20px; margin: 10px auto; max-width: 600px; border-radius: 8px; text-align: center; font-weight: 500;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         
         <div class="container">
             <h1>Tạo câu hỏi trắc nghiệm</h1>
@@ -18,16 +27,26 @@
                         <header>
                             <h4>Chọn tập tin tại đây</h4>
                         </header>
-                        <p>Định dạng tập tin hỗ trợ: PDF, TXT, DOC, DOCX</p>
-                        <p>Dung lượng tối đa: 20MB</p>
-                        <input type="file" name="pdf_file" accept=".pdf,.txt,.doc,.docx" id="fileID" required>
+                        <p>Định dạng tập tin hỗ trợ: PDF, TXT, DOCX</p>
+                        <p>Dung lượng tối đa: 50MB</p>
+                        <input type="file" name="pdf_file" accept=".pdf,.txt,.docx" id="fileID" required>
                         <p id="fileSizeText"></p>
                         <p>Chọn số lượng câu hỏi muốn tạo?</p>
                         <input type="number" name="num_questions" value="5" min="1" max="100" required>
                         </div>
                         <div class="ans-btn-container">
-                            <a href="/" class="answer-btn" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">Quay lại</a>
-                            <button class="answer-btn" type="submit">Tải lên</button>
+                            <a href="/" class="btn-back">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                Quay lại
+                            </a>
+                            <button class="btn-upload" type="submit">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                                Tải lên
+                            </button>
                         </div>
                         
                     </div>

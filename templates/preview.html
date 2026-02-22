@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="vi-VN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Xem trước văn bản</title>
+    <style>
+        .preview-container {
+            min-height: 100vh;
+            padding: 30px 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .preview-card {
+            background: var(--white-color);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            width: 95%;
+            max-width: 800px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .preview-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--ink-color);
+            margin: 0;
+        }
+        
+        .file-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: var(--white-color);
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .file-badge svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--soft-surface);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .stat-item svg {
+            width: 18px;
+            height: 18px;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            color: var(--muted-ink);
+        }
+        
+        .stat-value {
+            font-weight: 700;
+            color: var(--ink-color);
+        }
+        
+        .text-preview-box {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 25px;
+        }
+        
+        .text-preview-box pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--ink-color);
+        }
+        
+        .text-preview-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .text-preview-box::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        .text-preview-box::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 10px;
+        }
+        
+        .text-preview-box::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-generate {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 36px;
+            background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+            color: var(--white-color);
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-generate:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+        }
+        
+        .btn-generate svg {
+            width: 22px;
+            height: 22px;
+        }
+        
+        .btn-reupload {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 28px;
+            background: var(--white-color);
+            color: var(--ink-color);
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-reupload:hover {
+            background: var(--soft-surface);
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+        
+        .btn-reupload svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .info-note {
+            text-align: center;
+            color: var(--muted-ink);
+            font-size: 0.85rem;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <div class="preview-card">
+            <div class="preview-header">
+                <h1 class="preview-title">📄 Văn bản đã trích xuất</h1>
+                <div class="file-badge">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {{ filename }}
+                </div>
+            </div>
+            
+            <div class="stats-row">
+                <div class="stat-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                    <span class="stat-label">Số từ:</span>
+                    <span class="stat-value">{{ word_count }}</span>
+                </div>
+                <div class="stat-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                    </svg>
+                    <span class="stat-label">Số ký tự:</span>
+                    <span class="stat-value">{{ char_count }}</span>
+                </div>
+                <div class="stat-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="stat-label">Số câu hỏi tạo:</span>
+                    <span class="stat-value">{{ num_questions }}</span>
+                </div>
+            </div>
+            
+            <div class="text-preview-box">
+                <pre>{{ text }}</pre>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="{{ url_for('upload_page') }}" class="btn-reupload">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Chọn file khác
+                </a>
+                <form action="{{ url_for('generate') }}" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn-generate">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Tạo câu hỏi trắc nghiệm
+                    </button>
+                </form>
+            </div>
+            
+            {% if text_truncated %}
+            <p class="warning-note" style="background: #fef3c7; color: #92400e; padding: 12px; border-radius: 8px; margin-top: 15px; text-align: center;">
+                ⚠️ Văn bản gốc có {{ full_char_count }} ký tự, đã được cắt ngắn còn {{ char_count }} ký tự để xử lý.
+            </p>
+            {% endif %}
+            <p class="info-note">Kiểm tra nội dung văn bản trước khi tạo câu hỏi. Văn bản tiếng Anh sẽ cho kết quả tốt nhất.</p>
+        </div>
+    </div>
+</body>
+</html>

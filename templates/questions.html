@@ -6,13 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Câu hỏi trắc nghiệm được tạo</title>
     <script>
+        let score = 0;
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let isAnswering = false;
+        
+        const totalQuestions = {{ mcqs|length }};
+        const questions = {{ mcqs|tojson|safe }};
+        
+        function resetQuiz() {
+            score = 0;
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            isAnswering = false;
+            
+            const scoreDisplay = document.getElementById('score');
+            if (scoreDisplay) {
+                scoreDisplay.style.display = 'block';
+                scoreDisplay.textContent = `Điểm: 0/${totalQuestions * 10}`;
+            }
+            
+            displayQuestion(0);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
         document.addEventListener('DOMContentLoaded', function () {
-            let score = 0;
-            let currentQuestionIndex = 0;
-            const totalQuestions = {{ mcqs|length }};
-            const questions = {{ mcqs|tojson|safe }};  // Thêm |safe để JSON không bị escape
-            const userAnswers = [];
-
             const questionContainer = document.querySelector('.question-container');
             const scoreDisplay = document.getElementById('score');
 
@@ -37,8 +55,8 @@
                 questionContainer.innerHTML = `
                     <div class="quiz-cards">
                         <div class="contents">
-                            <p>Câu ${questionNumber} trong ${totalQuestions}</p>
-                            <p>${stem}</p>
+                            <span class="question-number">📝 Câu ${questionNumber} / ${totalQuestions}</span>
+                            <p class="question-text">${stem}</p>
                             <ol class="numbered-list">
                                 ${choices.map((option, i) => `
                                     <div class="btn-container">
@@ -56,9 +74,68 @@
             }
 
             function displayResults() {
+                const correctCount = userAnswers.filter(a => a.isCorrect).length;
+                const incorrectCount = totalQuestions - correctCount;
+                const percentageScore = (correctCount / totalQuestions) * 100;
+                const finalScore = Math.round(percentageScore * 10) / 10;
+                
+                let gradeClass = '';
+                let gradeText = '';
+                let message = '';
+                
+                if (percentageScore === 100) {
+                    gradeClass = 'grade-perfect';
+                    gradeText = 'S';
+                    message = "🎉 Hoàn hảo! Bạn là thiên tài!";
+                } else if (percentageScore >= 90) {
+                    gradeClass = 'grade-excellent';
+                    gradeText = 'A+';
+                    message = "🌟 Xuất sắc! Kiến thức vững vàng!";
+                } else if (percentageScore >= 80) {
+                    gradeClass = 'grade-good';
+                    gradeText = 'A';
+                    message = "👏 Rất tốt! Tiếp tục phát huy!";
+                } else if (percentageScore >= 70) {
+                    gradeClass = 'grade-fair';
+                    gradeText = 'B';
+                    message = "👍 Khá tốt! Cố gắng thêm nhé!";
+                } else if (percentageScore >= 60) {
+                    gradeClass = 'grade-pass';
+                    gradeText = 'C';
+                    message = "📚 Đạt yêu cầu. Hãy ôn tập thêm!";
+                } else {
+                    gradeClass = 'grade-fail';
+                    gradeText = 'D';
+                    message = "💪 Cần cố gắng hơn. Đừng bỏ cuộc!";
+                }
+                
                 let resultsHTML = `
-                    <p class="scoretext">Bài kiểm tra đã hoàn thành!</p>
-                    <p class="finalscore">Điểm cuối cùng: ${score}/${totalQuestions * 10}</p>
+                    <div class="results-summary">
+                        <p class="scoretext">🎯 Kết quả bài kiểm tra</p>
+                        <div class="grade-circle ${gradeClass}">
+                            <span class="grade-letter">${gradeText}</span>
+                            <span class="grade-percent">${finalScore}%</span>
+                        </div>
+                        <div class="score-breakdown">
+                            <div class="score-item">
+                                <span class="score-label">✅ Số câu đúng</span>
+                                <span class="score-value correct">${correctCount}</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-label">❌ Số câu sai</span>
+                                <span class="score-value incorrect">${incorrectCount}</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-label">📊 Tổng số câu</span>
+                                <span class="score-value">${totalQuestions}</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-label">🏆 Điểm số</span>
+                                <span class="score-value">${correctCount * 10}/${totalQuestions * 10}</span>
+                            </div>
+                        </div>
+                        <p class="result-message">${message}</p>
+                    </div>
                     <div class="results-container">
                 `;
 
@@ -67,48 +144,37 @@
                     const stem = question[1][0];
                     const choices = question[1][1];
                     const correctAnswer = question[1][2];
+                    const statusIcon = answer.isCorrect ? '✅' : '❌';
 
                     resultsHTML += `
-                        <div class="quiz-cards">
+                        <div class="quiz-cards ${answer.isCorrect ? 'card-correct' : 'card-incorrect'}">
                             <div class="contents">
-                                <p>${stem}</p>
+                                <span class="question-number">${statusIcon} Câu ${index + 1}</span>
+                                <p class="question-text">${stem}</p>
                                 <ol class="numbered-list">
                                     ${choices.map((option, i) => {
                                         const letter = String.fromCharCode(65 + i);
                                         let className = '';
-                                        if (answer.selectedOption === letter) {
-                                            className = answer.isCorrect ? 'correct' : 'incorrect';
+                                        if (letter === correctAnswer) {
+                                            className = 'correct';
+                                        } else if (answer.selectedOption === letter && !answer.isCorrect) {
+                                            className = 'incorrect';
                                         }
                                         return `
                                             <div class="btn-container">
-                                                <button class="answer-btn ${className}" data-option="${letter}">
+                                                <button class="answer-btn ${className}" disabled>
                                                     ${letter}. ${option}
                                                 </button>
                                             </div>
                                         `;
                                     }).join('')}
                                 </ol>
-                                <p>Câu trả lời của bạn: ${answer.selectedOption} ${answer.isCorrect ? '(Đúng)' : '(Sai)'}</p>
-                                <p>Đáp án đúng: ${correctAnswer}</p>
                             </div>
                         </div>
                     `;
                 });
 
                 resultsHTML += `</div>`;
-
-                // Tính phần trăm và thông điệp
-                const percentageScore = (score / (totalQuestions * 10)) * 100;
-                let message = '';
-                if (percentageScore === 100) message = "Chúc mừng! Bạn đã đạt 100%! Hoàn hảo!";
-                else if (percentageScore >= 90) message = "Xuất sắc! Bạn đã đạt trên 90%!";
-                else if (percentageScore >= 80) message = "Làm tốt lắm! Bạn đã đạt trên 80%!";
-                else if (percentageScore >= 70) message = "Công việc tốt! Bạn đã đạt trên 70%!";
-                else if (percentageScore >= 60) message = "Làm việc tốt! Bạn đã đạt trên 60%!";
-                else message = "Bạn có thể làm tốt hơn lần sau. Hãy tiếp tục luyện tập!";
-
-                resultsHTML += `<p style="text-align:center; font-size:1.4rem; margin-top:20px;">${message}</p>`;
-
                 questionContainer.innerHTML = resultsHTML;
             }
 
@@ -116,41 +182,57 @@
                 if (scoreDisplay) scoreDisplay.style.display = 'none';
             }
 
+            // Gán hàm displayQuestion ra global để resetQuiz có thể gọi
+            window.displayQuestion = displayQuestion;
+            
             // Bắt đầu hiển thị câu đầu tiên
             displayQuestion(currentQuestionIndex);
-
+            
             // Xử lý click đáp án
             questionContainer.addEventListener('click', function(event) {
-                if (event.target.classList.contains('answer-btn')) {
-                    const selectedOption = event.target.dataset.option;
-                    const correctAnswer = event.target.dataset.correctAnswer;
-                    const isCorrect = selectedOption === correctAnswer;
+                const btn = event.target.closest('.answer-btn');
+                if (!btn || isAnswering) return;
+                
+                // Ngăn click nhiều lần
+                isAnswering = true;
+                
+                // Disable tất cả các nút
+                const allBtns = questionContainer.querySelectorAll('.answer-btn');
+                allBtns.forEach(b => b.disabled = true);
+                
+                const selectedOption = btn.dataset.option;
+                const correctAnswer = btn.dataset.correctAnswer;
+                const isCorrect = selectedOption === correctAnswer;
 
-                    userAnswers.push({
-                        selectedOption,
-                        correctAnswer,
-                        isCorrect
+                userAnswers.push({
+                    selectedOption,
+                    correctAnswer,
+                    isCorrect
+                });
+
+                if (isCorrect) {
+                    btn.classList.add('correct');
+                    score += 10;
+                } else {
+                    btn.classList.add('incorrect');
+                    // Hiển thị đáp án đúng
+                    allBtns.forEach(b => {
+                        if (b.dataset.option === correctAnswer) {
+                            b.classList.add('correct');
+                        }
                     });
-
-                    if (isCorrect) {
-                        event.target.classList.add('correct');
-                        event.target.textContent += ' (Đúng)';
-                        score += 10;
-                    } else {
-                        event.target.classList.add('incorrect');
-                        event.target.textContent += ' (Sai)';
-                    }
-
-                    if (scoreDisplay) {
-                        scoreDisplay.textContent = `Điểm: ${score}/${totalQuestions * 10}`;
-                    }
-
-                    // Chuyển câu tiếp theo sau 2 giây
-                    setTimeout(() => {
-                        currentQuestionIndex++;
-                        displayQuestion(currentQuestionIndex);
-                    }, 2000);
                 }
+
+                if (scoreDisplay) {
+                    scoreDisplay.textContent = `Điểm: ${score}/${totalQuestions * 10}`;
+                }
+
+                // Chuyển câu tiếp theo sau 1.5 giây
+                setTimeout(() => {
+                    isAnswering = false;
+                    currentQuestionIndex++;
+                    displayQuestion(currentQuestionIndex);
+                }, 1500);
             });
         });
     </script>
@@ -164,6 +246,11 @@
                     <div id="score">Điểm: 0/{{ mcqs|length * 10 }}</div>
                 {% endif %}
             </div>
+            {% if warning_message %}
+            <div class="warning-banner" style="background: #fef3c7; color: #92400e; padding: 12px 20px; border-radius: 10px; margin-top: 15px; max-width: 500px; text-align: center; font-weight: 500;">
+                ⚠️ {{ warning_message }}
+            </div>
+            {% endif %}
         </div>
         <div class="question-container">
             <!-- Câu hỏi sẽ được JS render vào đây -->
@@ -173,7 +260,24 @@
         {% endif %}
     </div>
     <div class="return-container">
-        <a class="button-3d" href="/">Quay lại</a>
+        <a class="btn-back" href="/">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Trang chủ
+        </a>
+        <button class="btn-retry" onclick="resetQuiz()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Làm lại
+        </button>
+        <a class="btn-new" href="/upload_page">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            File mới
+        </a>
     </div>
 </body>
 </html>
