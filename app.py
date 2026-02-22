@@ -1,25 +1,28 @@
 from flask import Flask, request, render_template, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
-import spacy
 import random
 import pdfplumber
 import os
-import nltk
 import uuid
-from nltk.corpus import wordnet
+import re
 
-# Tải dữ liệu NLTK cần thiết
-nltk.download('wordnet', quiet=True)
-nltk.download('punkt', quiet=True)
+# Import thư viện xử lý tiếng Việt
+try:
+    from underthesea import word_tokenize, pos_tag, sent_tokenize
+    NLP_READY = True
+    print("[OK] Da tai thu vien xu ly tieng Viet (underthesea)")
+except ImportError:
+    NLP_READY = False
+    print("[LOI] Khong tim thay thu vien underthesea. Vui long chay: pip install underthesea")
 
 app = Flask(__name__)
-app.secret_key = 'super_secret_key_697'  # Khóa bí mật cho phiên làm việc
+app.secret_key = 'super_secret_key_697'
 
 UPLOAD_FOLDER = 'uploads'
 TEMP_TEXT_FOLDER = 'temp_texts'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Giới hạn file tối đa 50MB
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -27,21 +30,11 @@ if not os.path.exists(UPLOAD_FOLDER):
 if not os.path.exists(TEMP_TEXT_FOLDER):
     os.makedirs(TEMP_TEXT_FOLDER)
 
-# Tải mô hình xử lý ngôn ngữ spaCy
-try:
-    nlp = spacy.load('en_core_web_sm')
-    nlp.max_length = 2000000
-    print("[OK] Da tai mo hinh xu ly ngon ngu thanh cong")
-except OSError:
-    print("[LOI] Khong tim thay mo hinh ngon ngu. Vui long chay lenh: python -m spacy download en_core_web_sm")
-    nlp = None
-
-# Giới hạn độ dài văn bản để tránh quá tải bộ nhớ
 MAX_TEXT_LENGTH = 500000
 
 
 def extract_text(file_path, extension):
-    """Trích xuất văn bản từ file PDF, TXT, DOCX"""
+    """Trich xuat van ban tu file PDF, TXT, DOCX"""
     text = ""
     try:
         if extension == '.pdf':
@@ -67,84 +60,94 @@ def extract_text(file_path, extension):
         return ""
 
 
-def get_synonyms(word):
-    """Lấy từ đồng nghĩa tiếng Anh từ WordNet"""
-    synonyms = set()
-    for syn in wordnet.synsets(word):
-        for lemma in syn.lemmas():
-            synonym = lemma.name().replace('_', ' ')
-            if synonym != word and ' ' not in synonym:
-                synonyms.add(synonym)
-    return list(synonyms)
+def extract_nouns_vietnamese(sentence):
+    """Trich xuat danh tu tu cau tieng Viet"""
+    try:
+        tagged = pos_tag(sentence)
+        nouns = []
+        for word, tag in tagged:
+            if tag in ['N', 'Np', 'Nc', 'Nu']:
+                if len(word) > 1 and not word.isdigit():
+                    nouns.append(word)
+        return nouns
+    except Exception:
+        return []
+
+
+def get_all_nouns_from_text(text):
+    """Lay tat ca danh tu tu van ban"""
+    try:
+        tagged = pos_tag(text[:50000])
+        nouns = set()
+        for word, tag in tagged:
+            if tag in ['N', 'Np', 'Nc', 'Nu']:
+                if len(word) > 1 and not word.isdigit():
+                    nouns.add(word)
+        return list(nouns)
+    except Exception:
+        return []
 
 
 def generate_mcqs(text, num_questions=5):
-    if not text or not nlp:
-        print("[LOI] Khong co van ban dau vao hoac mo hinh chua duoc tai.")
+    """Tao cau hoi trac nghiem tu van ban tieng Viet"""
+    if not text or not NLP_READY:
+        print("[LOI] Khong co van ban dau vao hoac thu vien chua duoc cai dat.")
         return []
 
-    doc = nlp(text)
-    sentences = [
-        sent.text.strip()
-        for sent in doc.sents
-        if 15 <= len(sent.text.strip()) <= 300
+    sentences = sent_tokenize(text)
+    valid_sentences = [
+        s.strip() for s in sentences
+        if 20 <= len(s.strip()) <= 400
     ]
 
-    print(f"[INFO] Tim thay {len(sentences)} cau hop le.")
+    print(f"[INFO] Tim thay {len(valid_sentences)} cau hop le.")
 
-    if not sentences:
+    if not valid_sentences:
         print("[LOI] Khong co cau hop le sau khi loc.")
         return []
 
+    all_nouns = get_all_nouns_from_text(text)
+    print(f"[INFO] Tim thay {len(all_nouns)} danh tu trong van ban.")
+
     mcqs = []
-    used_sentences = set()
+    used_keys = set()
     attempts = 0
-    max_attempts = len(sentences) * 3
+    max_attempts = len(valid_sentences) * 4
 
     while len(mcqs) < num_questions and attempts < max_attempts:
         attempts += 1
         
-        sentence = random.choice(sentences)
-        sent_doc = nlp(sentence)
-        
-        nouns = [
-            token.text for token in sent_doc
-            if token.pos_ in ["NOUN", "PROPN"]
-            and len(token.text) > 2
-            and token.text.isalpha()
-        ]
+        sentence = random.choice(valid_sentences)
+        nouns = extract_nouns_vietnamese(sentence)
 
         if not nouns:
             continue
 
         subject = random.choice(nouns)
         
-        question_key = f"{sentence}_{subject}"
-        if question_key in used_sentences:
+        if subject not in sentence:
             continue
-        used_sentences.add(question_key)
+        
+        question_key = f"{sentence}_{subject}"
+        if question_key in used_keys:
+            continue
+        used_keys.add(question_key)
         
         question_stem = sentence.replace(subject, "________", 1)
 
-        if len(question_stem) < 25:
+        if len(question_stem) < 20:
             continue
 
-        distractors = get_synonyms(subject)
+        distractors = [
+            n for n in all_nouns
+            if n.lower() != subject.lower()
+            and len(n) > 1
+        ]
+        random.shuffle(distractors)
+        distractors = distractors[:3]
 
-        if len(distractors) < 3:
-            candidates = [
-                t.text for t in doc
-                if t.pos_ in ["NOUN", "PROPN"]
-                and t.text.lower() != subject.lower()
-                and t.text not in distractors
-                and len(t.text) > 2
-            ]
-            random.shuffle(candidates)
-            distractors.extend(candidates[:3 - len(distractors)])
-
-        distractors = list(set(distractors))[:3]
         while len(distractors) < 3:
-            distractors.append("Khác")
+            distractors.append(f"Dap an {len(distractors) + 1}")
 
         choices = [subject] + distractors
         random.shuffle(choices)
@@ -152,7 +155,7 @@ def generate_mcqs(text, num_questions=5):
         correct_letter = chr(65 + choices.index(subject))
 
         mcqs.append((question_stem, choices, correct_letter))
-        print(f"[OK] Da tao cau hoi: {question_stem[:60]}... (dap an: {correct_letter})")
+        print(f"[OK] Da tao cau hoi: {question_stem[:50]}... (dap an: {correct_letter})")
 
     print(f"[INFO] Tong so cau hoi da tao: {len(mcqs)} / yeu cau: {num_questions}")
     
