@@ -36,7 +36,11 @@ source venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
+### 4. 
 
+```bash
+pip install underthesea
+```
 ## Chay ung dung
 
 ```bash
