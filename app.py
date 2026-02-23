@@ -5,8 +5,6 @@ import random
 import pdfplumber
 import os
 import uuid
-import re
-
 # Import thư viện xử lý tiếng Việt
 try:
     from underthesea import word_tokenize, pos_tag, sent_tokenize
