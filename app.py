@@ -117,12 +117,13 @@ def generate_mcqs(text, num_questions=5):
         
         sentence = random.choice(valid_sentences)
         nouns = extract_nouns_vietnamese(sentence)
-
+        
+        """bỏ qua câu nếu câu không có danh từ"""
         if not nouns:
             continue
 
         subject = random.choice(nouns)
-        
+        """Đảm bảo đáp thực sự xuất hiện trong câu"""
         if subject not in sentence:
             continue
         
