@@ -1,0 +1,6 @@
+system/
+# environment / secrets
+.env
+demo_mcq/.env
+__pycache__/
+demo_mcq/__pycache__/
