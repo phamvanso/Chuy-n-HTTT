@@ -16,7 +16,8 @@ from .spacy_module import SpacyPipeline, VALID_METHODS
 
 __all__ = ('TransformersQG', 'ADDITIONAL_SP_TOKENS', 'TASK_PREFIX', 'clean', 'internet_connection')
 
-os.environ["TOKENIZERS_PARALLELISM"] = "false"  # to turn off warning message
+# Tat canh bao parallelism cua tokenizer de log gon hon.
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 TASK_PREFIX = {
     "ae": "extract answers",
     "qg": "generate question",
@@ -38,7 +39,7 @@ def pickle_save(obj, path: str):
 
 
 def pickle_load(path: str):
-    with open(path, "rb") as fp:  # Unpickling
+    with open(path, "rb") as fp:  # Doc lai object da duoc pickle truoc do.
         return pickle.load(fp)
 
 
@@ -64,14 +65,19 @@ def load_language_model(model_name,
                         torch_dtype=None,
                         device_map: str = None,
                         low_cpu_mem_usage: bool = False):
-    """ load language model from huggingface model hub """
-    # tokenizer
+    """Nap tokenizer/model tu Hugging Face va bo sung special token can thiet.
+
+    - Tu dong chon `local_files_only=True` khi khong co internet.
+    - Chon dung class model theo `config.model_type`.
+    - Them token `<hl>` de danh dau span highlight trong input.
+    """
+    # Tokenizer + config
     local_files_only = not internet_connection()
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_name, cache_dir=cache_dir, local_files_only=local_files_only, use_auth_token=use_auth_token)
     config = transformers.AutoConfig.from_pretrained(
         model_name, local_files_only=local_files_only, cache_dir=cache_dir, use_auth_token=use_auth_token)
-    # model
+    # Chon class model theo loai architecture.
     if config.model_type == 't5':  # T5 model requires T5ForConditionalGeneration class
         model_class = transformers.T5ForConditionalGeneration.from_pretrained
     elif config.model_type == 'mt5':
@@ -92,7 +98,7 @@ def load_language_model(model_name,
     if device_map is not None:
         param['device_map'] = device_map
     model = model_class(model_name, **param)
-    # add new special tokens to the tokenizer and the model if they don't have it
+    # Dong bo tokenizer/model voi token dac biet (<hl>) dung trong pipeline QG.
     tokenizer.add_special_tokens({'additional_special_tokens': list(ADDITIONAL_SP_TOKENS.values())})
     model.resize_token_embeddings(len(tokenizer))
     return tokenizer, model, config
@@ -105,18 +111,18 @@ def label_smoothed_loss(logits, labels, epsilon):
         labels = labels.unsqueeze(-1)
 
     padding_mask = labels.eq(CE_IGNORE_INDEX)
-    # In case the ignore_index is -100, the gather will fail, so we replace labels by 0. The padding_mask
-    # will ignore them in any case.
+    # Neu label = -100 thi gather se loi, nen tam clamp ve 0.
+    # Cac vi tri pad van duoc loai bo boi `padding_mask`.
     labels.clamp_min_(0)
 
     nll_loss = log_probs.gather(dim=-1, index=labels)
     nll_loss.masked_fill_(padding_mask, 0.0)
 
-    # works for fp16 input tensor too, by internally upcasting it to fp32
+    # Cong thuc nay van on voi fp16 vi tong duoc tinh o fp32.
     smoothed_loss = log_probs.sum(dim=-1, keepdim=True, dtype=torch.float32)
     smoothed_loss.masked_fill_(padding_mask, 0.0)
 
-    # Take the mean over the label dimensions, then divide by the number of active elements (i.e. not-padded):
+    # Chuan hoa theo so token hop le (khong tinh padding).
     num_active_elements = padding_mask.numel() - padding_mask.long().sum()
     nll_loss = nll_loss.sum() / num_active_elements
     smoothed_loss = smoothed_loss.sum() / (num_active_elements * log_probs.shape[-1])
@@ -124,7 +130,7 @@ def label_smoothed_loss(logits, labels, epsilon):
 
 
 class Dataset(torch.utils.data.Dataset):
-    """ torch.utils.data.Dataset wrapper converting into tensor """
+    """Wrapper nho cho DataLoader: chuyen dict feature -> tensor."""
     float_tensors = ['attention_mask']
 
     def __init__(self, data: List):
@@ -143,7 +149,7 @@ class Dataset(torch.utils.data.Dataset):
 
 
 class EncodePlus:
-    """ Wrapper of encode_plus for multiprocessing. """
+    """Wrapper cho buoc tokenize, co the dung trong multiprocessing."""
 
     def __init__(self,
                  tokenizer,
@@ -154,26 +160,26 @@ class EncodePlus:
                  drop_highlight_error_text: bool = False,
                  prefix_type: str = None,
                  padding: bool = True):
-        """ Wrapper of encode_plus for multiprocessing.
+        """Khoi tao bo ma hoa input/output.
 
         @param tokenizer: transforms.Tokenizer
-        @param max_length: Max text length of input.
-        @param max_length_output: Max text length of output.
-        @param drop_overflow_error_text: If true, return None when the input exceeds the max length.
-        @param skip_overflow_error: If true, raise an error when the input exceeds the max length.
-        @param drop_highlight_error_text: If true, raise an error when a highlight span is not found in the paragraph.
-        @param prefix_type: Either of `qg` or `answer_extraction`, which is to add at the beginning of the text.
-        @param padding: Pad the sequence to the max length.
+        @param max_length: Do dai toi da cua input.
+        @param max_length_output: Do dai toi da cua output.
+        @param drop_overflow_error_text: True -> bo mau vuot max length (tra ve None).
+        @param skip_overflow_error: True -> bo qua check overflow.
+        @param drop_highlight_error_text: True -> bo mau neu khong tim thay highlight span.
+        @param prefix_type: Prefix tac vu (`qg`, `ae`, `qag`, `qa`).
+        @param padding: Co pad ve max_length hay khong.
         """
         self.prefix = TASK_PREFIX[prefix_type] if prefix_type is not None else None
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.max_length_output = max_length_output
-        # NOTE: for model training, we should drop the exceeded input but not for the evaluator
+        # Khi train thuong bo mau overlength; khi evaluate co the muon giu lai.
         self.drop_overflow_error_text = drop_overflow_error_text
         self.skip_overflow_error = skip_overflow_error
         self.drop_highlight_error_text = drop_highlight_error_text
-        # truncation should be true for the batch process, but not necessary to process single input
+        # Bat truncation cho pipeline batch de tranh vo batch.
         self.param_in = {'truncation': True, 'max_length': self.max_length}
         self.param_out = {'truncation': True, 'max_length': self.max_length_output}
         if padding:
@@ -184,14 +190,14 @@ class EncodePlus:
         return self.encode_plus(*inputs)
 
     def encode_plus(self, input_sequence: str, output_sequence: str = None, input_highlight: str = None):
-        """ encode_plus
+        """Tokenize 1 mau du lieu.
 
-        @param input_sequence: Input sequence.
-        @param output_sequence: Output sequence.
-        @param input_highlight: Sub-sequence of `input_sequence` to be surrounded by <hl>.
-        @return: The output of `encode_plus`.
+        @param input_sequence: Cau/van ban dau vao.
+        @param output_sequence: Chuoi muc tieu (neu co, dung cho train).
+        @param input_highlight: Chuoi con can danh dau bang `<hl>`.
+        @return: Dict feature da tokenized (co the kem `labels`).
         """
-        # add highlight to the input
+        # Chen token <hl> quanh span cau tra loi de model biet vi tri can hoi.
         if input_highlight is not None:
             position = input_sequence.find(input_highlight)
             if position == -1:
@@ -204,20 +210,20 @@ class EncodePlus:
         if self.prefix is not None:
             input_sequence = f'{self.prefix}: {input_sequence}'
 
-        # handling overflow text
-        # drop_overflow_error_text ==> remove the overflow sentence from input
-        # skip_overflow_error ==> keep the overflow sentence
-        # none of them ==> raise error
+        # Xu ly overlength:
+        # - drop_overflow_error_text=True: loai bo mau.
+        # - skip_overflow_error=True: bo qua check.
+        # - mac dinh: nem exception de phat hien du lieu loi.
         if self.drop_overflow_error_text or not self.skip_overflow_error:
             if len(self.tokenizer.encode(input_sequence)) > self.max_length:
-                if not self.drop_overflow_error_text:  # raise error for overflow text
+                if not self.drop_overflow_error_text:  # Bao loi neu khong cho phep drop.
                     raise ExceedMaxLengthError(self.max_length)
-                return None  # remove overflow text
+                return None  # Loai bo mau overlength.
             if output_sequence is not None:
                 if len(self.tokenizer.encode(output_sequence)) > self.max_length_output:
-                    if not self.drop_overflow_error_text:  # raise error for overflow text
+                    if not self.drop_overflow_error_text:  # Bao loi neu output qua dai.
                         raise ExceedMaxLengthError(self.max_length)
-                    return None  # remove overflow text
+                    return None  # Loai bo mau overlength.
         if type(self.tokenizer) is transformers.models.mbart.tokenization_mbart_fast.MBartTokenizerFast:
             encode = self.tokenizer(input_sequence, **self.param_in)
         else:
@@ -228,7 +234,7 @@ class EncodePlus:
 
 
 class TransformersQG:
-    """ Transformers Language Model for Question Generation. """
+    """Model wrapper cho cac tac vu QG/AE/QA/QAG tren Transformers."""
 
     def __init__(self,
                  model: str = None,
@@ -253,34 +259,34 @@ class TransformersQG:
                  is_qag: bool = None,
                  is_qa: bool = None,
                  is_ae: bool = None):
-        """ Transformers Language Model for Question Generation.
+        """Khoi tao model va cac thanh phan phu tro cho sinh cau hoi.
 
-        @param model: Model alias or path to local model file.
-        @param max_length: Max text length of input.
-        @param max_length_output: Max text length of output.
-        @param cache_dir: Directory to cache transformers model files.
-        @param add_prefix: Whether model uses task-specific prefix (eg. True for T5 but False for BART models).
-        @param language: Language alias for SpaCy language-specific pipelines (sentencizer/keyword extraction).
-        @param label_smoothing: [Fine-tuning parameter] Label smoothing.
-        @param drop_overflow_error_text: If true, return None when the input exceeds the max length.
-        @param skip_overflow_error: If true, raise an error when the input exceeds the max length.
-        @param drop_highlight_error_text: If true, raise an error when a highlight span is not found in the paragraph.
+        @param model: Ten model tren hub hoac duong dan local.
+        @param max_length: Do dai toi da input.
+        @param max_length_output: Do dai toi da output.
+        @param cache_dir: Thu muc cache model/tokenizer.
+        @param add_prefix: Co them prefix tac vu vao input hay khong.
+        @param language: Ngon ngu dung cho pipeline spaCy.
+        @param label_smoothing: He so label smoothing khi train.
+        @param drop_overflow_error_text: True -> bo mau overlength.
+        @param skip_overflow_error: True -> bo qua check overlength.
+        @param drop_highlight_error_text: True -> bo mau neu khong tim thay highlight.
         @param use_auth_token: [optional] Huggingface transformers argument of `use_auth_token`
         """
 
-        # take default model given the language
+        # Neu khong truyen model, lay model mac dinh theo ngon ngu.
         if model is None:
             assert language in DEFAULT_MODELS.keys(),\
                 f"Model with language '{language}' is not available. Please choose language from " \
                 f"'{DEFAULT_MODELS.keys()}' or specify 'model'."
             model = DEFAULT_MODELS[language]
 
-        # classify model type
+        # Suy ra kha nang tac vu tu ten model (qg/ae/qa/qag).
         self.is_qg = 'qg' in model.split('-') if is_qg is None else is_qg
         self.is_ae = 'ae' in model.split('-') if is_ae is None else is_ae
         self.is_qa = 'qa' in model.split('-') if is_qa is None else is_qa
         self.is_qag = 'qag' in model.split('-') if is_qag is None else is_qag
-        # configs
+        # Luu cau hinh co ban.
         self.model_name = model
         self.max_length = max_length
         self.max_length_output = max_length_output
@@ -292,21 +298,21 @@ class TransformersQG:
         self.model_name_ae = model_ae
         self.max_length_ae = max_length_ae
         self.max_length_output_ae = max_length_output_ae
-        # load model
+        # Nap model chinh (QG/QA/QAG).
         self.tokenizer, self.model, config = load_language_model(
             self.model_name, cache_dir=cache_dir, use_auth_token=use_auth_token, device_map=device_map,
             torch_dtype=torch_dtype, low_cpu_mem_usage=low_cpu_mem_usage)
         if 'add_prefix' not in config.to_dict().keys():
-            # this means the model is not fine-tuned
+            # Model chua co flag add_prefix trong config (thuong la base model).
             # assert add_prefix, '`add_prefix` is required for non-fine-tuned models'
             self.add_prefix = add_prefix
         else:
             self.add_prefix = config.add_prefix
 
-        # set default behaviour for answer extraction
+        # Cai dat mac dinh cho module trich xuat dap an (AE).
         if self.model_name_ae is None:
             self.model_name_ae = self.model_name if self.is_ae else "positionrank"
-        # load answer extraction model
+        # Chon backend AE: spaCy / multitask (chung model) / pipeline (model rieng).
         self.answer_model_type = None
         if self.model_name_ae in VALID_METHODS:
             logging.info(f'use spaCy answer extraction model: {self.model_name_ae}')
@@ -327,7 +333,7 @@ class TransformersQG:
                 self.answer_model_type = 'pipeline'
             self.spacy_module = SpacyPipeline(language)
 
-        # GPU setup
+        # Thiet lap thiet bi tinh toan va DataParallel neu nhieu GPU.
         self.device = 'cuda' if torch.cuda.device_count() > 0 else 'cpu'
         self.parallel = False
         if torch.cuda.device_count() > 1:
@@ -358,14 +364,13 @@ class TransformersQG:
                             splitting_symbol: str = ' [SEP] ',
                             question_prefix: str = "question: ",
                             answer_prefix: str = ", answer: "):
-        """ Generate question from paragraph and answer. Note that `list_answer` is needed unless they are already
-        highlighted in the `list_context`. eg) "I live in <hl> Tokyo <hl>."
+        """Sinh truc tiep danh sach (question, answer) tu context bang model QAG end-to-end.
 
-        @param list_context: List of input texts.
-        @param batch_size: Batch size.
-        @param num_beams: Number of beam for model generation.
-        @param cache_path: Path to pre-compute features.
-        @return: List of generated sentences.
+        @param list_context: Mot context hoac danh sach context.
+        @param batch_size: Batch size khi generate.
+        @param num_beams: So beam search.
+        @param cache_path: Duong dan cache feature da encode.
+        @return: Danh sach cap (question, answer) cho moi context.
         """
         logging.info(f'running model for `question_answer_pair_generation`')
         assert self.is_qag, "`generate_qa_end2end` is available for end2end_qag_model"
@@ -401,15 +406,18 @@ class TransformersQG:
                     cache_path: str = None,
                     num_questions: int = None,
                     sentence_level: bool = False):
-        """ Generate question given context.
+        """Sinh cap QA tu context.
 
-        @param list_context: Input text.
+        - Neu model la QAG end-to-end: goi `generate_qa_end2end`.
+        - Neu la pipeline: AE truoc, sau do QG cho tung answer.
+
+        @param list_context: Van ban dau vao.
         @param batch_size: Batch size.
-        @param num_beams: Number of beam for model generation.
-        @param cache_path: Path to pre-compute features.
-        @param num_questions: Max number of questions.
-        @param sentence_level: Run prediction on each sentence of the context independently to reduce complexity.
-        @return: List of generated sentences.
+        @param num_beams: So beam search.
+        @param cache_path: Duong dan cache feature da encode.
+        @param num_questions: Gioi han so cau hoi (chu yeu cho spaCy AE).
+        @param sentence_level: Bat prediction theo cau de giam do phuc tap.
+        @return: Danh sach cap (question, answer).
         """
         if self.is_qag:
             return self.generate_qa_end2end(list_context, batch_size, num_beams, cache_path)
@@ -446,7 +454,7 @@ class TransformersQG:
 
         assert len(qg_hl) == len(list_question), f"{len(qg_input)} != {len(list_question)}"
 
-        # return to nested list
+        # Gom ket qua ve dung cau truc theo tung context ban dau.
         list_question = [list_question[list_length[n - 1]:list_length[n]] for n in range(1, len(list_length))]
         list_answer = [qg_hl[list_length[n - 1]:list_length[n]] for n in range(1, len(list_length))]
         output_list = [None] * original_input_length
@@ -464,15 +472,15 @@ class TransformersQG:
                    cache_path: str = None,
                    sentence_level: bool = False,
                    num_questions: int = None):
-        """ Generate answers from each sentence.
+        """Trich xuat dap an tu context.
 
-        @param context: Input text.
+        @param context: Van ban dau vao.
         @param batch_size: Batch size.
-        @param num_beams: Number of beam for model generation.
-        @param cache_path: Path to pre-compute features.
-        @param sentence_level: Run prediction on each sentence of the context independently to reduce complexity.
-        @param num_questions: Max number of questions.
-        @return: List of generated answers.
+        @param num_beams: So beam search.
+        @param cache_path: Duong dan cache feature da encode.
+        @param sentence_level: Bat prediction theo tung cau.
+        @param num_questions: So dap an toi da (cho backend spaCy).
+        @return: Danh sach dap an cho moi context.
         """
         logging.info(f'running model for `answer_extraction`')
         if self.answer_model_type == 'spacy':
@@ -483,12 +491,12 @@ class TransformersQG:
                 return [self.spacy_module.keyword(c, num_questions) for c in context]
         single_input = type(context) is str
         context = [context] if single_input else context
-        list_sentences = [self.spacy_module.sentence(c) for c in context]  # split into sentence
+        list_sentences = [self.spacy_module.sentence(c) for c in context]  # Tach context thanh danh sach cau.
         list_inputs = [[c] * len(s) for c, s in zip(context, list_sentences)]
         list_length = [0] + np.cumsum([len(s) for s in list_sentences]).tolist()
         if sentence_level:
             list_inputs = list_sentences
-        # flatten inputs
+        # Flatten de dua vao batch generate.
         flat_sentences = list(chain(*list_sentences))
         flat_inputs = list(chain(*list_inputs))
         if self.answer_model_type == 'multitask':
@@ -512,7 +520,7 @@ class TransformersQG:
             )
         else:
             raise ValueError(f"unknown answer model type: {self.answer_model_type}")
-        # return to nested list
+        # Khoi phuc lai cau truc nested theo context ban dau.
         answer = [clean(a) for a in answer]
         list_answer = [answer[list_length[n - 1]:list_length[n]] for n in range(1, len(list_length))]
         list_answer = [[a for a, c in zip(a_sent, c_sent) if a is not None and a in c]
@@ -530,16 +538,15 @@ class TransformersQG:
                    num_beams: int = 4,
                    cache_path: str = None,
                    sentence_level: bool = False):
-        """ Generate question from paragraph and answer. Note that `list_answer` is needed unless they are already
-        highlighted in the `list_context`. eg) "I live in <hl> Tokyo <hl>."
+        """Sinh cau hoi tu context va answer (answer duoc highlight bang `<hl>`).
 
-        @param list_context: List of input texts.
-        @param list_answer: List of answers in the `list_context` that are highlighted by <hl>.
+        @param list_context: Context dau vao.
+        @param list_answer: Danh sach answer can highlight trong context.
         @param batch_size: Batch size.
-        @param num_beams: Number of beam for model generation.
-        @param cache_path: Path to pre-compute features.
-        @param sentence_level: Run prediction on each sentence of the context independently to reduce complexity.
-        @return: List of generated sentences.
+        @param num_beams: So beam search.
+        @param cache_path: Duong dan cache feature da encode.
+        @param sentence_level: Bat prediction theo cau de giam do phuc tap.
+        @return: Cau hoi sinh ra.
         """
         assert self.is_qg, "model is not fine-tuned for QG"
         if list_answer is not None:
@@ -593,15 +600,15 @@ class TransformersQG:
                             cache_path: str = None,
                             sentence_level: bool = False,
                             switch_to_model_ae: bool = False):
-        """ General method to generate model prediction
+        """Ham generate tong quat cho QG/AE/QA.
 
-        @param inputs: List of input sequences.
-        @param highlights: List of sub-sequences from list_context to be highlighted by <hl>.
+        @param inputs: Danh sach input text.
+        @param highlights: Danh sach span can highlight bang `<hl>`.
         @param batch_size: Batch size.
-        @param num_beams: Number of beam for model generation.
-        @param cache_path: Path to pre-compute features.
-        @param prefix_type: Either of `qg` or `answer_extraction`, which is to add at the beginning of the text.
-        @return: List of generated sequences.
+        @param num_beams: So beam search.
+        @param cache_path: Duong dan cache feature da encode.
+        @param prefix_type: Prefix tac vu (`qg`, `ae`, `qag`, `qa`).
+        @return: Danh sach chuoi da generate.
         """
         self.eval()
         if switch_to_model_ae:
@@ -615,7 +622,7 @@ class TransformersQG:
             max_length_output = self.max_length_output
 
         if sentence_level:
-            assert highlights is not None, '`sentence_level` needs `highlights`.'
+            assert highlights is not None, '`sentence_level` can tham so `highlights` de xac dinh cau chua answer.'
             assert len(highlights) == len(inputs), str([len(highlights), len(inputs)])
             list_sentence = []
             for context, answer in zip(inputs, highlights):
@@ -645,10 +652,10 @@ class TransformersQG:
         return outputs
 
     def encode_to_loss(self, encode: Dict):
-        """ Transform encoded features to loss value for model finetuning.
+        """Tinh loss tu feature da encode (dung cho fine-tuning).
 
-        @param encode: Encoded feature.
-        @return: Loss value.
+        @param encode: Dict feature da tokenize (co `labels`).
+        @return: Gia tri loss scalar.
         """
         assert 'labels' in encode
         output = self.model(**{k: v.to(self.device) for k, v in encode.items()})
@@ -664,14 +671,14 @@ class TransformersQG:
                        prefix_type: str = None,
                        cache_path: str = None,
                        switch_to_model_ae: bool = False):
-        """ Transform texts into encoded features.
+        """Chuyen text dau vao/dau ra thanh feature tokenized.
 
-        @param inputs: List of input sequences.
-        @param outputs: List of output sequences.
-        @param highlights: List of sub-sequences from `inputs` to be highlighted by <hl>.
-        @param prefix_type: Either of `qg` or `answer_extraction`, which is to add at the beginning of the text.
-        @param cache_path: Path to pre-compute features.
-        @return: List of encoded feature.
+        @param inputs: Danh sach input.
+        @param outputs: Danh sach output tuong ung (neu co).
+        @param highlights: Danh sach span can danh dau `<hl>`.
+        @param prefix_type: Prefix tac vu.
+        @param cache_path: Duong dan cache feature trung gian.
+        @return: Danh sach feature da encode.
         """
         if cache_path is not None and os.path.exists(cache_path):
             logging.info(f'loading preprocessed feature from {cache_path}')
@@ -680,7 +687,7 @@ class TransformersQG:
         highlights = [None] * len(inputs) if highlights is None else highlights
         assert len(outputs) == len(inputs) == len(highlights), str([len(outputs), len(inputs), len(highlights)])
         data = list(zip(inputs, outputs, highlights))
-        # process in parallel/single
+        # Chon cach xu ly: song song hoac don luong.
         config = {'tokenizer': self.tokenizer, 'max_length': self.max_length, 'prefix_type': prefix_type,
                   'max_length_output': self.max_length_output, 'drop_overflow_error_text': self.drop_overflow_error_text,
                   'skip_overflow_error': self.skip_overflow_error, 'drop_highlight_error_text': self.drop_highlight_error_text,
@@ -698,14 +705,14 @@ class TransformersQG:
             pool = Pool()
             out = pool.map(EncodePlus(**config), data)
             pool.close()
-            out = list(filter(None, out))  # remove overflow text
+            out = list(filter(None, out))  # Loai bo cac mau bi drop (overlength/highlight loi).
         else:
             f = EncodePlus(**config)
             out = []
             files = []
             for i in tqdm(data):
                 e = f(i)
-                if e is not None:  # remove overflow text
+                if e is not None:  # Chi giu cac mau hop le.
                     out.append(e)
                 if len(out) > 40000 and cache_path is not None:
                     pickle_save(out, f'{cache_path}.tmp{len(files)}')
@@ -717,16 +724,16 @@ class TransformersQG:
             if len(files) > 0:
                 out = list(chain(*[pickle_load(i) for i in files]))
         logging.info(f'after remove the overflow : {len(out)}')
-        # cache the encoded data
+        # Luu cache de tai su dung o lan chay sau.
         if cache_path is not None:
             pickle_save(out, cache_path)
             logging.info(f'preprocessed feature is saved at {cache_path}')
         return out
 
     def save(self, save_dir):
-        """ Save model.
+        """Luu model va tokenizer ra thu muc.
 
-        @param save_dir: Directory to save model related file.
+        @param save_dir: Thu muc dich.
         """
 
         def model_state(model):
@@ -742,12 +749,12 @@ class TransformersQG:
 
     @staticmethod
     def get_data_loader(encode_list, batch_size: int = None, shuffle: bool = False, drop_last: bool = False):
-        """ Get torch.utils.data.DataLoader instance.
+        """Tao DataLoader tu danh sach feature da encode.
 
-        @param encode_list: List of encoded features.
+        @param encode_list: Danh sach feature da encode.
         @param batch_size: Batch size.
-        @param shuffle: Shuffle data.
-        @param drop_last: Drop residual batch.
+        @param shuffle: Tron du lieu truoc moi epoch.
+        @param drop_last: Bo batch cuoi neu khong du so luong.
         @return: torch.utils.data.DataLoader
         """
         batch_size = len(encode_list) if batch_size is None else batch_size

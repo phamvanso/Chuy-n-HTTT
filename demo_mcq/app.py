@@ -7,7 +7,7 @@ Chạy:
     streamlit run app.py
 """
 
-import os, random, json, time, copy
+import os, random, json, time, copy, base64
 from pathlib import Path
 from typing import List, Dict, Optional
 
@@ -21,11 +21,27 @@ load_dotenv(Path(__file__).parent / ".env")
 # Page config
 # ══════════════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="MCQ Generator – Công cụ soạn đề trắc nghiệm",
+    page_title="Hệ thống tạo câu hỏi trắc nghiệm",
     page_icon="📝",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Background image config
+BG_IMAGE_PATH = Path(__file__).resolve().parent.parent / "assets" / "918414.jpg"
+BG_IMAGE_OPACITY = 0.45  # 0.0 = an het anh, 1.0 = ro net anh
+
+
+def _read_base64_image(path: Path) -> str:
+    """Doc anh local va tra ve chuoi base64 de gan vao CSS."""
+    try:
+        return base64.b64encode(path.read_bytes()).decode("ascii")
+    except OSError:
+        return ""
+
+
+_bg_b64 = _read_base64_image(BG_IMAGE_PATH)
+_bg_overlay = max(0.0, min(1.0, 1.0 - BG_IMAGE_OPACITY))
 
 # ══════════════════════════════════════════════════════════════
 # CSS
@@ -80,6 +96,26 @@ div[data-testid="stButton"] > button { width: 100%; }
 </style>
 """, unsafe_allow_html=True)
 
+if _bg_b64:
+    st.markdown(
+        f"""
+<style>
+[data-testid="stAppViewContainer"] {{
+    background:
+        linear-gradient(
+            rgba(247, 249, 252, {_bg_overlay:.3f}),
+            rgba(247, 249, 252, {_bg_overlay:.3f})
+        ),
+        url("data:image/jpeg;base64,{_bg_b64}");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
 # ══════════════════════════════════════════════════════════════
 # Constants & helpers
 # ══════════════════════════════════════════════════════════════
@@ -94,43 +130,9 @@ EXAMPLE = (
     "Sông Hồng chảy qua phía đông bắc thành phố, tạo nên vùng đất màu mỡ phù sa."
 )
 
-_EXAMPLE_TOPICS = [
-    "lịch sử Việt Nam", "địa lý Việt Nam", "văn hóa ẩm thực Việt Nam",
-    "khoa học vũ trụ", "môi trường và biến đổi khí hậu", "công nghệ trí tuệ nhân tạo",
-    "y học và sức khỏe cộng đồng", "kinh tế Việt Nam", "văn học dân gian Việt Nam",
-    "sinh học đại cương", "lịch sử thế giới", "địa lý tự nhiên",
-]
 
 def _generate_example_paragraph() -> str:
-    """Sinh đoạn văn ví dụ bằng OpenAI (ưu tiên) để giữ Gemini quota cho distractor.
-    Fallback về đoạn cứng nếu không có API key hoặc lỗi."""
-    topic  = random.choice(_EXAMPLE_TOPICS)
-    prompt = (
-        f"Hãy viết một đoạn văn tiếng Việt từ 150 đến 250 từ về chủ đề: {topic}. "
-        "Đoạn văn cần có nhiều dữ kiện cụ thể (tên, số liệu, địa danh, khái niệm) "
-        "để có thể dùng làm ngữ liệu sinh câu hỏi trắc nghiệm. "
-        "Chỉ trả về đoạn văn, không có tiêu đề, không giải thích."
-    )
-
-    # ── Thử OpenAI trước (không tốn Gemini quota) ──────────────
-    openai_key = os.getenv("OPENAI_API_KEY", "")
-    if openai_key:
-        try:
-            from openai import OpenAI
-            client = OpenAI(api_key=openai_key)
-            resp   = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.9,
-                max_tokens=400,
-            )
-            text = (resp.choices[0].message.content or "").strip()
-            if len(text) > 50:
-                return text
-        except Exception:
-            pass
-
-    # ── Không có OpenAI → dùng đoạn cứng (giữ Gemini cho distractor) ──
+    """Đoạn văn ví dụ mặc định"""
     return EXAMPLE
 
 def _init_state():
@@ -169,6 +171,7 @@ def shuffle_mcq(mcq: Dict) -> Dict:
 
 
 def mcq_to_text(mcq_list: List[Dict], show_ans: bool = False) -> str:
+    """Render danh sách MCQ thành text"""
     lines = []
     for i, m in enumerate(mcq_list, 1):
         lines.append(f"Câu {i}. {m['question']}")
@@ -181,18 +184,21 @@ def mcq_to_text(mcq_list: List[Dict], show_ans: bool = False) -> str:
 
 
 def save_to_history(mcq_list: List[Dict]):
+    """Đẩy đề mới lên đầu lịch sử, giữ tối đa 10 đề."""
     hist = st.session_state["history"]
     hist.insert(0, copy.deepcopy(mcq_list))
     st.session_state["history"] = hist[:10]
 
 
 # ══════════════════════════════════════════════════════════════
-# Cached model loaders (singleton per session)
+# Cached model loaders
 # ══════════════════════════════════════════════════════════════
 @st.cache_resource(show_spinner=False)
 def load_qa_generator(model_name: str, use_api: bool, hf_token: str):
     from generator import QAGenerator
-    return QAGenerator(model_name=model_name or None, use_api=use_api, hf_token=hf_token or None)
+    clean_model_name = (model_name or "").strip() or None
+    clean_hf_token = (hf_token or "").strip() or None
+    return QAGenerator(model_name=clean_model_name, use_api=use_api, hf_token=clean_hf_token)
 
 
 @st.cache_resource(show_spinner=False)
@@ -210,17 +216,17 @@ def load_distractor_generator(backend: str, model: str, api_key: str, ollama_hos
 # SIDEBAR – Cấu hình giáo viên
 # ══════════════════════════════════════════════════════════════
 with st.sidebar:
-    st.markdown("## ⚙️ Cấu hình")
+    st.markdown("## ⚙️ Tùy chỉnh")
 
     # ── ViQAG ──────────────────────────────────────────────────
-    with st.expander("🧠 Stage 1 – ViT5 (sinh Q-A)", expanded=False):
-        qa_mode = st.radio(
-            "Chế độ",
+    with st.expander("Stage 1 – ViT5 (sinh Q-A)", expanded=True):
+        qa_mode = st.selectbox(
+            "Phương thức",
             ["Local model (~1GB RAM)", "HF Inference API (không cần GPU)"],
             index=0,
-            help="Local model: tự download về máy, không cần token. API: gọi HF nhưng chỉ hỗ trợ model phổ biến.",
+            help="Local model: tự download về máy, không cần token. API: gọi HF.",
         )
-        use_api_flag = "API" in qa_mode
+        use_api_flag = "API" in qa_mode #Biến boolean để biết có đang chọn mode API không
         viqag_model  = st.text_input(
             "Model",
             value=os.getenv("VIQAG_MODEL", "shnl/vit5-vinewsqa-qg-ae"),
@@ -233,7 +239,7 @@ with st.sidebar:
         )
         if use_api_flag:
             st.warning(
-                "⚠️ HF Inference API chỉ hỗ trợ các model phổ biến được HF featured. "
+                "HF Inference API chỉ hỗ trợ các model phổ biến được HF featured. "
                 "Các model ViT5 tiếng Việt thường không khả dụng qua API → khuyến nghị dùng **Local model**.",
                 icon="⚠️",
             )
@@ -241,30 +247,36 @@ with st.sidebar:
     # ── LLM ────────────────────────────────────────────────────
     with st.expander("🤖 Stage 2 – LLM (sinh distractors)", expanded=True):
         llm_backend = st.selectbox(
-            "Backend",
+            "Nguồn LLM",
             ["auto", "gemini", "openai", "ollama"],
             index=0,
         )
-        llm_model = st.text_input(
-            "Model name",
-            value="",
-            placeholder="Để trống = mặc định",
-            help="VD: gemini-1.5-flash, gpt-4o-mini, llama3",
-        )
-        llm_api_key = st.text_input(
-            "API Key",
-            value=os.getenv("GEMINI_API_KEY", "") or os.getenv("OPENAI_API_KEY", ""),
-            type="password",
-        )
-        ollama_host = st.text_input(
-            "Ollama Host",
-            value=os.getenv("OLLAMA_HOST", "http://localhost:11434"),
-        )
-
+        if llm_backend != "auto":
+            llm_model = st.text_input(
+                "Model name",
+                value="",
+                placeholder="Để trống = mặc định",
+                help="VD: gemini-1.5-flash, gpt-4o-mini, llama3",
+            )
+            if llm_backend != "ollama":
+                llm_api_key = st.text_input(
+                    "API Key",
+                    value=os.getenv("GEMINI_API_KEY", "") or os.getenv("OPENAI_API_KEY", ""),
+                    type="password",
+                )
+            else:
+                llm_api_key = None
+            if llm_backend == "ollama":
+                ollama_host = st.text_input(
+                    "Ollama Host",
+                    value=os.getenv("OLLAMA_HOST", "http://localhost:11434"),
+                )
+            else:
+                ollama_host = None
     st.divider()
 
     # ── Tuỳ chọn đề ────────────────────────────────────────────
-    st.markdown("### 📐 Tuỳ chọn đề")
+    st.markdown("### Lịch sử")
     num_pairs       = st.slider("Số câu hỏi muốn sinh", 2, 15, 5)
     num_distractors = st.radio("Số đáp án sai / câu", [3, 4], index=0, horizontal=True)
     difficulty      = st.select_slider(
@@ -293,7 +305,7 @@ with st.sidebar:
 # HEADER
 # ══════════════════════════════════════════════════════════════
 st.markdown(
-    "# 📝 Công cụ Soạn Đề Trắc Nghiệm Tiếng Việt"
+    "# 📝 Hệ thống tạo câu hỏi trắc nghiệm"
 )
 
 # ══════════════════════════════════════════════════════════════
@@ -309,11 +321,11 @@ with col_main:
     # ── Text input ─────────────────────────────────────────────
     st.markdown("#### 📄 Bước 1 – Nhập đoạn văn bản")
 
-    col_ta, col_ex = st.columns([5, 1])
+    col_ta, col_ex = st.columns([6, 1])
     with col_ex:
         st.markdown(" ")   # padding
-        if st.button("🎲\nVí dụ", use_container_width=True, help="Sinh đoạn văn ngẫu nhiên (OpenAI nếu có key, không thì dùng đoạn mẫu)"):
-            with st.spinner("Đang sinh đoạn văn…"):
+        if st.button("🎲\nVí dụ", use_container_width=True, help="Văn mẫu sẵn có"):
+            with st.spinner("Đang lấy văn mẫu…"):
                 st.session_state["context_input"] = _generate_example_paragraph()
             st.rerun()
     with col_ta:
@@ -326,7 +338,7 @@ with col_main:
         )
 
     word_count = len(context.split()) if context else 0
-    st.caption(f"Số từ: **{word_count}**  |  Khuyến nghị: 100–500 từ")
+    st.caption(f"Số từ: **{word_count}**")
 
     # ── Nút Generate ───────────────────────────────────────────
     st.markdown("#### 🚀 Bước 2 – Sinh câu hỏi")
@@ -339,7 +351,7 @@ with col_main:
         help="Số cặp Q-A tối đa sẽ được sinh ra từ đoạn văn",
     )
     generate_btn = st.button(
-        "✨  Sinh câu hỏi trắc nghiệm",
+        "✨ Sinh câu hỏi trắc nghiệm",
         type="primary",
         use_container_width=True,
     )
@@ -357,17 +369,17 @@ with col_main:
 
             # difficulty → prompt modifier
             diff_hint = {
-                "Dễ": "gần giống nhau về âm thanh hoặc cấu trúc",
-                "Trung bình": "hợp lý và có sức nhiễu cao",
-                "Khó": "rất dễ gây nhầm lẫn, tương tự đáp án đúng về ngữ nghĩa",
+                "Dễ": "gần giống nhau về âm thanh hoặc cấu trúc, số từ gần bằng nhau",
+                "Trung bình": "hợp lý và có sức nhiễu cao, số từ gần bằng nhau",
+                "Khó": "rất dễ gây nhầm lẫn, tương tự đáp án đúng về ngữ nghĩa, số từ gần bằng nhau",
             }[difficulty]
 
             # ── Load models ───────────────────────────────────
-            with st.status("⚙️ Khởi tạo model…", expanded=True) as s:
+            with st.status("⚙️ Load model…", expanded=True) as s:
                 try:
-                    st.write("🔄 Đang kết nối ViT5…")
+                    st.write("🔄 Khởi động ViT5 (sinh câu hỏi)...")
                     qa_gen = load_qa_generator(viqag_model, use_api_flag, hf_token_input)
-                    st.write("🔄 Đang kết nối LLM backend…")
+                    st.write("🔄 Đang kết nối đến LLM ...")
                     dist_gen = load_distractor_generator(
                         None if llm_backend == "auto" else llm_backend,
                         llm_model or None,
@@ -382,7 +394,7 @@ with col_main:
 
             # ── Stage 1: ViQAG ────────────────────────────────
             with st.status(
-                "🧠 **Stage 1 · ViT5** – Đang phân tích văn bản và sinh Q-A…",
+                " **Stage 1 · ViT5** – Đang phân tích văn bản và sinh Q-A…",
                 expanded=True,
             ) as s:
                 try:
@@ -418,15 +430,23 @@ with col_main:
                 result = []
                 for p in pairs:
                     
-                    q_, a_ = p["question"], p["answer"]
+                    q_ = p.get("question", "").strip()
+                    a_ = p.get("answer", "").strip()
+
+                    if not q_ or not a_:
+                        continue
+                    
+                    # Bỏ answer quá ngắn
+                    if len(a_.split()) < 1:
+                        continue
                     # Bỏ answer quá dài (>35 từ)
-                    if len(a_.split()) > 35:
+                    if len(a_.split()) > 30:
                         continue
                     # Bỏ answer xuất hiện trong question (answer leakage)
                     if a_.lower() in q_.lower():
                         continue
-                    # Bỏ câu hỏi gần giống nhau – Jaccard >= 0.55
-                    if any(_jaccard(q_, sq) >= 0.55 for sq in seen_q):
+                    # Bỏ câu hỏi gần giống nhau – Jaccard >= 0.40
+                    if any(_jaccard(q_, sq) >= 0.40 for sq in seen_q):
                         continue
                     seen_q.append(q_)
                     result.append(p)
@@ -449,7 +469,7 @@ with col_main:
                 )
                 # Throttle: ≥4s between calls to stay within Gemini free-tier rate limit
                 if i > 0:
-                    time.sleep(4)
+                    time.sleep(1)
                 try:
                     augmented_ctx = f"{ctx}\n[Yêu cầu: distractors {diff_hint}]"
                     distractors = dist_gen.generate(
@@ -790,7 +810,9 @@ st.markdown("""
 @st.cache_resource(show_spinner=False)
 def load_qa_generator(model_name: str, use_api: bool, hf_token: str):
     from generator import QAGenerator
-    return QAGenerator(model_name=model_name or None, use_api=use_api, hf_token=hf_token or None)
+    clean_model_name = (model_name or "").strip() or None
+    clean_hf_token = (hf_token or "").strip() or None
+    return QAGenerator(model_name=clean_model_name, use_api=use_api, hf_token=clean_hf_token)
 
 
 @st.cache_resource(show_spinner=False)
