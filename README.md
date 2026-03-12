@@ -11,7 +11,7 @@ Pipeline gồm 2 giai đoạn:
         ├─ AE: "extract answers: ..."    →  đáp án ứng viên
         └─ QG: "generate question: ..."  →  câu hỏi
         │
-        ▼  Stage 2 – LLM (Gemini / GPT / Ollama)
+        ▼  Stage 2 – LLM ( Ollama)
         └─ Sinh 3–4 đáp án sai (distractors) cho mỗi câu
         │
         ▼  Build MCQ
@@ -73,8 +73,8 @@ ViT5/
 ### 1. Clone repo
 
 ```bash
-git clone https://github.com/haibadguy/ViT5.git
-cd ViT5/demo_mcq
+git clone https://github.com/phamvanso/Chuy-n-HTTT.git
+cd Chuy-n-HTTT/demo_mcq
 ```
 
 ### 2. Cài thư viện
@@ -112,18 +112,6 @@ cp .env.example .env     # Mac / Linux
 ```
 
 Điền vào `.env`:
-
-```env
-# Model sinh Q-A (tải tự động lần đầu ~900 MB)
-VIQAG_MODEL=shnl/vit5-vinewsqa-qg-ae
-
-# HuggingFace token (chỉ cần khi dùng HF Inference API)
-HF_TOKEN=hf_xxxxxxxxxxxxxxxxxx
-
-# Gemini API key – lấy tại https://aistudio.google.com/app/apikey
-GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-2.5-flash-lite
-```
 
 ### 4. Khởi động
 
@@ -165,20 +153,9 @@ Input sử dụng prefix để phân biệt subtask:
 # Question Generation
 "generate question: {context_before} <hl> {answer} <hl> {context_after}"
 ```
-
-Các model khác hỗ trợ:
-
-| Model | Loại | Dataset | Link |
-|---|---|---|---|
-| `shnl/vit5-vinewsqa-qg-ae` | Multitask QG+AE | ViNewsQA | [HF](https://huggingface.co/shnl/vit5-vinewsqa-qg-ae) |
-| `namngo/pipeline-vit5-viquad-qg` | Pipeline QG | ViQuAD | [HF](https://huggingface.co/namngo/pipeline-vit5-viquad-qg) |
-| `namngo/pipeline-vit5-viquad-ae` | Pipeline AE | ViQuAD | [HF](https://huggingface.co/namngo/pipeline-vit5-viquad-ae) |
-
 ### Stage 2 – LLM (Distractor Generation)
 
-Mặc định dùng **Gemini 2.5 Flash Lite** qua `google-genai` SDK [[6]](#references).
-Cũng hỗ trợ OpenAI GPT và Ollama (local).
-
+Mặc định dùng Ollama (local) 
 ---
 
 ## 📐 Công thức toán học
@@ -207,8 +184,8 @@ trong đó $Q$ là các cặp QA gold trong tập huấn luyện, $f(\cdot)$ là
 ### Cài đặt
 
 ```bash
-git clone https://github.com/haibadguy/ViT5.git
-cd ViT5
+git clone https://github.com/phamvanso/Chuy-n-HTTT.git
+cd Chuy-n-HTTT
 pip install -r requirements.txt
 ```
 
