@@ -160,15 +160,37 @@ Mặc định dùng Ollama (local)
 
 ## 📐 Công thức toán học
 
-Bài toán QAG được phát biểu là: cho đoạn văn $C = \{s_1, s_2, \ldots, s_n\}$ gồm $n$ câu, mô hình cần sinh ra tập cặp hỏi-đáp
+### Question–Answer Generation (QAG)
 
-$$\mathcal{Q} = \{(q_1, a_1),\ (q_2, a_2),\ \ldots\}$$
+**Question–Answer Generation (QAG)** được mô hình hóa như một **bài toán sinh văn bản (text generation)** bằng cách sử dụng **Pretrained Language Models (PLMs)** hoặc **Large Language Models (LLMs)**.
 
-như một quá trình sinh có điều kiện:
+Cho một đoạn ngữ cảnh:
 
-$$\mathcal{Q} = f(Q \mid C,\ \theta)$$
+$C = \{s_{1}, s_{2}, ..., s_{n}\}$
 
-trong đó $Q$ là các cặp QA gold trong tập huấn luyện, $f(\cdot)$ là mô hình encoder-decoder, và $\theta$ là tham số mô hình được học qua fine-tuning.
+trong đó $C  gồm $\textit{n}$ câu. Nhiệm vụ của mô hình QAG là **tự động sinh ra các cặp câu hỏi – câu trả lời tự nhiên** từ đoạn ngữ cảnh này:
+
+$\mathcal{Q}$ = $\{(q_{1}, a_{1}), (q_{2}, a_{2}), ...\}$.
+
+Trong đó:
+
+* $(q_{i})$ là **câu hỏi**
+* $(a_{i})$ là **câu trả lời tương ứng**
+
+Về mặt hình thức, bài toán QAG được biểu diễn như **một quá trình sinh có điều kiện**:
+
+$\mathcal{Q} = f(Q|C, \theta)$
+Trong đó:
+
+* $C$: đoạn ngữ cảnh đầu vào
+* $Q$: tập các cặp **Question–Answer (QA)** chuẩn trong dữ liệu huấn luyện
+* $f()$: mô hình sinh văn bản, thường là **encoder–decoder** hoặc **generative language model**
+* $\theta$: tập **tham số của mô hình**
+
+Các tham số $\theta$ được học trong quá trình huấn luyện bằng cách sử dụng các **PLMs dạng encoder–decoder (ví dụ: T5, BART, ViT5)** hoặc **LLMs** để tạo ra các cặp **QA** phù hợp với ngữ cảnh đầu vào.
+
+---
+
 
 <figure>
   <p align="center">
@@ -179,126 +201,130 @@ trong đó $Q$ là các cặp QA gold trong tập huấn luyện, $f(\cdot)$ là
 
 ---
 
-## 📖 Dùng như thư viện Python
+## Sử dụng
 
 ### Cài đặt
 
 ```bash
 git clone https://github.com/phamvanso/Chuy-n-HTTT.git
-cd Chuy-n-HTTT
+cd Chuy-n-HTTT/demo_mcq
 pip install -r requirements.txt
 ```
+## Tạo câu hỏi và đáp án
+### Pipeline Models:
+Mô hình **Pipeline** thực hiện sinh **Question–Answer Generation (QAG)** theo **hai giai đoạn riêng biệt**:
 
-### Pipeline model (QG + AE riêng biệt)
+1. **Answer Extraction / Generation (AE)**  
+2. **Question Generation (QG)**  
+
+Ở **giai đoạn đầu**, mô hình nhận **đoạn ngữ cảnh đầu vào** \(C\) và **trích xuất hoặc sinh ra một câu trả lời** \(\bar{a}\).
+
+\[C \rightarrow \bar{a}\]
+
+Sau đó, ở **giai đoạn thứ hai**, mô hình sử dụng **câu trả lời \(\bar{a}\)** cùng với **ngữ cảnh \(C\)** để **sinh ra câu hỏi tương ứng** \(\bar{q}\).
+
+\[
+(C, \bar{a}) \rightarrow \bar{q}
+\]
+
+Do kiến trúc **Pipeline** huấn luyện **hai mô hình độc lập**, nên **AE và QG phải được xử lý riêng biệt**.
+
+Trong hệ thống này:
+
+- `model_ae` : mô hình **Answer Extraction / Answer Generation (AE)**
+- `model` : mô hình **Question Generation (QG)**
+
+Hai mô hình này phối hợp với nhau để tạo ra **cặp câu hỏi – câu trả lời (QA pairs)** từ văn bản đầu vào.
 
 ```python
 from plms.language_model import TransformersQG
+model = TransformersQG(model='namngo/pipeline-vit5-viquad-qg', model_ae='namngo/pipeline-vit5-viquad-ae')
 
-model = TransformersQG(
-    model='namngo/pipeline-vit5-viquad-qg',
-    model_ae='namngo/pipeline-vit5-viquad-ae'
-)
+input = 'Lê Lợi sinh ra trong một gia đình hào trưởng tại Thanh Hóa, trưởng thành trong thời kỳ Nhà Minh đô hộ nước Việt.' \
+        'Thời bấy giờ có nhiều cuộc khởi nghĩa của người Việt nổ ra chống lại quân Minh nhưng đều thất bại.' \
+        'Năm 1418, Lê Lợi tổ chức cuộc khởi nghĩa Lam Sơn với lực lượng ban đầu chỉ khoảng vài nghìn người.' \
+        'Thời gian đầu ông hoạt động ở vùng thượng du Thanh Hóa, quân Minh đã huy động lực lượng tới hàng vạn quân để đàn áp,' \
+        'nhưng bằng chiến thuật trốn tránh hoặc sử dụng chiến thuật phục kích và hòa hoãn, nghĩa quân Lam Sơn đã dần lớn mạnh.'
 
-context = (
-    'Lê Lợi sinh ra trong một gia đình hào trưởng tại Thanh Hóa, trưởng thành trong thời kỳ Nhà Minh đô hộ nước Việt.'
-    'Năm 1418, Lê Lợi tổ chức cuộc khởi nghĩa Lam Sơn với lực lượng ban đầu chỉ khoảng vài nghìn người.'
-    'Thời gian đầu ông hoạt động ở vùng thượng du Thanh Hóa, quân Minh đã huy động lực lượng tới hàng vạn quân để đàn áp,'
-    'nhưng bằng chiến thuật trốn tránh hoặc sử dụng chiến thuật phục kích và hòa hoãn, nghĩa quân Lam Sơn đã dần lớn mạnh.'
-)
+qa = model.generate_qa(input)
 
-qa = model.generate_qa(context)
 print(qa)
-# [
-#   ('Quân Minh đã huy động bao nhiêu quân để đàn áp?', 'hàng vạn quân'),
-#   ('Lê Lợi đã làm gì vào năm 1418?', 'tổ chức cuộc khởi nghĩa Lam Sơn'),
-# ]
+
+[
+  ('Quân Minh đã sử dụng chiến thuật nào để đánh quân vào vùng thượng du Thanh Hóa?','huy động lực lượng tới hàng vạn quân')
+  ('Có bao nhiêu cuộc khởi nghĩa của người Việt chống lại quân Minh?', 'nhiều cuộc khởi nghĩa của người Việt nổ ra'),
+  ('Lê Lợi đã làm gì vào năm 1418?', 'tổ chức cuộc khởi nghĩa Lam Sơn'),
+]
 ```
+
 
 ### Multitask / End-to-End model
+- **Sinh QAG với Multitask và End2End Models:** Các mô hình **Multitask** được huấn luyện để vừa **sinh câu trả lời** vừa **sinh câu hỏi**, có khả năng **sinh trực tiếp các cặp câu hỏi – câu trả lời** cùng lúc.Và sử dụng **một mô hình duy nhất**, nên chỉ cần truyền tham số ```model``` là đủ.
 
 ```python
 from plms.language_model import TransformersQG
-
 model = TransformersQG(model='shnl/vit5-vinewsqa-qg-ae')
-qa    = model.generate_qa(context)
+
+input = 'Lê Lợi sinh ra trong một gia đình hào trưởng tại Thanh Hóa, trưởng thành trong thời kỳ Nhà Minh đô hộ nước Việt.' \
+        'Thời bấy giờ có nhiều cuộc khởi nghĩa của người Việt nổ ra chống lại quân Minh nhưng đều thất bại.' \
+        'Năm 1418, Lê Lợi tổ chức cuộc khởi nghĩa Lam Sơn với lực lượng ban đầu chỉ khoảng vài nghìn người.' \
+        'Thời gian đầu ông hoạt động ở vùng thượng du Thanh Hóa, quân Minh đã huy động lực lượng tới hàng vạn quân để đàn áp,' \
+        'nhưng bằng chiến thuật trốn tránh hoặc sử dụng chiến thuật phục kích và hòa hoãn, nghĩa quân Lam Sơn đã dần lớn mạnh.'
+
+qa = model.generate_qa(input)
+
+print(qa)
+
+#[
+#  ('Lê Lợi sinh ra trong hoàn cảnh nào?', 'một gia đình hào trưởng'),
+#  ('Lực lượng ban đầu của Lê Lợi là bao nhiêu?', 'khoảng vài nghìn người'),
+#  ('Quân Minh đã huy động lực lượng tới bao nhiêu quân để đàn áp?', 'hàng vạn quân')
+#]
 ```
+---
+ m\
+## ⚙️ Huấn luyện mô hình
+### Demo Model (demo_mcq)
 
-### Chỉ sinh câu hỏi (QG Only)
+Phần **demo** trong thư mục `demo_mcq` sử dụng model:
 
-```python
-from plms.language_model import TransformersQG
+`shnl/vit5-vinewsqa-qg-ae`
 
-model   = TransformersQG(model='namngo/pipeline-vit5-viquad-qg')
-context = ['Năm 1418, Lê Lợi tổ chức cuộc khởi nghĩa Lam Sơn...']
-answer  = ['Năm 1418']
+Đây là phiên bản đã được **fine-tuning từ model gốc** `VietAI/vit5-base` bằng phương pháp **Multitask Learning** để thực hiện hai nhiệm vụ:
 
-questions = model.generate_q(list_context=context, list_answer=answer)
-# ['Cuộc khởi nghĩa Lam Sơn nổ ra vào năm nào?']
-```
-
-### Chỉ trích xuất đáp án (AE Only)
-
-```python
-from plms.language_model import TransformersQG
-
-model  = TransformersQG(model='namngo/pipeline-vit5-viquad-ae')
-answer = model.generate_a(context)
-# ['Lê Lợi', 'tổ chức cuộc khởi nghĩa Lam Sơn', 'hàng vạn quân']
-```
+- **Answer Extraction (AE)**: trích xuất các đáp án tiềm năng từ đoạn văn  
+- **Question Generation (QG)**: sinh câu hỏi từ đoạn văn và đáp án
 
 ---
 
-## ⚙️ Huấn luyện mô hình
+#### 1. Phương pháp Fine-tuning
 
-### Chuẩn bị dữ liệu
+Dự án sử dụng **Multitask Learning** để huấn luyện **một model duy nhất** thực hiện đồng thời hai nhiệm vụ AE và QG.
 
-Dữ liệu cần ở định dạng `.jsonl`. Xem mẫu tại [`data/examples/`](data/examples/).
+Model phân biệt nhiệm vụ thông qua **prefix** được thêm vào đầu input:
 
-```bash
-# Pipeline / Multitask
-python ./data/qg_data.py process_data \
-    --input_dir  'path/to/input' \
-    --output_dir 'path/to/output'
+| Task | Input Format |
+|-----|-----|
+| **Answer Extraction (AE)** | `extract answers: <context>` |
+| **Question Generation (QG)** | `generate question: <context> <hl> <answer> <hl>` |
 
-# End2End / Instruction
-python ./data/qag_data.py process_data \
-    --input_dir        'path/to/input' \
-    --output_dir       'path/to/output' \
-    --instruction_path 'data/instructions.txt'
-```
+Trong đó `<hl>` dùng để **highlight đáp án trong ngữ cảnh**.
 
-### Fine-tuning
+---
 
-```bash
-# AE (Answer Extraction)
-python train.py fine-tuning \
-    --model 'VietAI/vit5-base' \
-    --dataset_path 'shnl/qg-example' \
-    --input_types 'paragraph_sentence' \
-    --output_types 'answer' \
-    --prefix_types 'ae'
+#### 2. Training Dataset
 
-# QG (Question Generation)
-python train.py fine-tuning \
-    --model 'VietAI/vit5-base' \
-    --dataset_path 'shnl/qg-example' \
-    --input_types 'paragraph_answer' \
-    --output_types 'question' \
-    --prefix_types 'qg'
+Model được fine-tune trên **ViNewsQA dataset**.
+
+Dữ liệu được chuyển sang định dạng `.jsonl` bằng các script trong thư mục:
+data/
+├── qg_data.py
+└── qag_data.py
 
 # Multitask (QG + AE cùng lúc)
 python train.py fine-tuning \
     --model 'VietAI/vit5-base' \
     --dataset_path 'shnl/qg-example'
-
-# End2End (QAG)
-python train.py fine-tuning \
-    --model 'VietAI/vit5-base' \
-    --dataset_path 'shnl/qag-example' \
-    --prefix_types 'qag' \
-    --input_types 'paragraph' \
-    --output_types 'questions_answers'
-```
 
 <figure>
   <p align="center">
@@ -355,13 +381,6 @@ Các metric được tính: BLEU-4, ROUGE-L, BERTScore (F1).
 
 **[10]** `VietAI/vit5-base` pretrained model: https://huggingface.co/VietAI/vit5-base
 
----
-
-## Citation
-
-Nếu bạn sử dụng nghiên cứu gốc trong công trình của mình, vui lòng trích dẫn:
-
-```bibtex
 @article{pham2024towards,
   title     = {Towards Vietnamese Question and Answer Generation: An Empirical Study},
   author    = {Pham, Quoc-Hung and Le, Huu-Loi and Dang Nhat, Minh and Tran T, Khang
