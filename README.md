@@ -74,8 +74,7 @@ ViT5/
 
 ```bash
 git clone https://github.com/phamvanso/Chuy-n-HTTT.git
-cd Chuy-n-HTTT/demo_mcq
-```
+cd Chuy-n-HTTT\demo_mcq```
 
 ### 2. Cài thư viện
 
@@ -281,9 +280,9 @@ python train.py fine-tuning \
 
 <figure>
   <p align="center">
-    <img src="assets/Fine-tuning.png" alt="Fig.2">
+    <img src="assets\Fine_tuning_Multitask.png" alt="Fig.2">
   </p>
-  <p align="center"><strong>Fig. 2 – Các phương pháp fine-tuning: Pipeline, Multitask, End2End (Pham et al., 2024).</strong></p>
+  <p align="center"><strong>Fig. 2 – Phương pháp fine-tuning Multitask.</strong></p>
 </figure>
 
 ### Đánh giá
