@@ -212,7 +212,7 @@ pip install -r requirements.txt
 ```
 ## Tạo câu hỏi và đáp án
 ### Multitask model
-- **Sinh QAG với Multitask và End2End Models:** Các mô hình **Multitask** được huấn luyện để vừa **sinh câu trả lời** vừa **sinh câu hỏi**, có khả năng **sinh trực tiếp các cặp câu hỏi – câu trả lời** cùng lúc.Và sử dụng **một mô hình duy nhất**, nên chỉ cần truyền tham số ```model``` là đủ.
+- **Sinh QAG với Multitask** Các mô hình **Multitask** được huấn luyện để vừa **sinh câu trả lời** vừa **sinh câu hỏi**, có khả năng **sinh trực tiếp các cặp câu hỏi – câu trả lời** cùng lúc.Và sử dụng **một mô hình duy nhất**, nên chỉ cần truyền tham số ```model``` là đủ.
 
 ```python
 from plms.language_model import TransformersQG
@@ -334,6 +334,7 @@ Các metric được tính: BLEU-4, ROUGE-L, BERTScore (F1).
 
 **[10]** `VietAI/vit5-base` pretrained model: https://huggingface.co/VietAI/vit5-base
 
+```
 @article{pham2024towards,
   title     = {Towards Vietnamese Question and Answer Generation: An Empirical Study},
   author    = {Pham, Quoc-Hung and Le, Huu-Loi and Dang Nhat, Minh and Tran T, Khang
