@@ -235,7 +235,7 @@ print(qa)
 #]
 ```
 ---
- m\
+
 ## ⚙️ Huấn luyện mô hình
 ### Demo Model (demo_mcq)
 
