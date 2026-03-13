@@ -136,7 +136,7 @@ Truy cập: **http://localhost:8501**
 
 ---
 
-## 🧠 Mô hình sử dụng
+##  Mô hình sử dụng
 
 ### Stage 1 – ViT5 (Question & Answer Generation)
 
@@ -154,8 +154,8 @@ Input sử dụng prefix để phân biệt subtask:
 "generate question: {context_before} <hl> {answer} <hl> {context_after}"
 ```
 ### Stage 2 – LLM (Distractor Generation)
+Mặc định dùng Ollama (local)
 
-Mặc định dùng Ollama (local) 
 ---
 
 ## 📐 Công thức toán học
@@ -211,54 +211,7 @@ cd Chuy-n-HTTT/demo_mcq
 pip install -r requirements.txt
 ```
 ## Tạo câu hỏi và đáp án
-### Pipeline Models:
-Mô hình **Pipeline** thực hiện sinh **Question–Answer Generation (QAG)** theo **hai giai đoạn riêng biệt**:
-
-1. **Answer Extraction / Generation (AE)**  
-2. **Question Generation (QG)**  
-
-Ở **giai đoạn đầu**, mô hình nhận **đoạn ngữ cảnh đầu vào** \(C\) và **trích xuất hoặc sinh ra một câu trả lời** \(\bar{a}\).
-
-\[C \rightarrow \bar{a}\]
-
-Sau đó, ở **giai đoạn thứ hai**, mô hình sử dụng **câu trả lời \(\bar{a}\)** cùng với **ngữ cảnh \(C\)** để **sinh ra câu hỏi tương ứng** \(\bar{q}\).
-
-\[
-(C, \bar{a}) \rightarrow \bar{q}
-\]
-
-Do kiến trúc **Pipeline** huấn luyện **hai mô hình độc lập**, nên **AE và QG phải được xử lý riêng biệt**.
-
-Trong hệ thống này:
-
-- `model_ae` : mô hình **Answer Extraction / Answer Generation (AE)**
-- `model` : mô hình **Question Generation (QG)**
-
-Hai mô hình này phối hợp với nhau để tạo ra **cặp câu hỏi – câu trả lời (QA pairs)** từ văn bản đầu vào.
-
-```python
-from plms.language_model import TransformersQG
-model = TransformersQG(model='namngo/pipeline-vit5-viquad-qg', model_ae='namngo/pipeline-vit5-viquad-ae')
-
-input = 'Lê Lợi sinh ra trong một gia đình hào trưởng tại Thanh Hóa, trưởng thành trong thời kỳ Nhà Minh đô hộ nước Việt.' \
-        'Thời bấy giờ có nhiều cuộc khởi nghĩa của người Việt nổ ra chống lại quân Minh nhưng đều thất bại.' \
-        'Năm 1418, Lê Lợi tổ chức cuộc khởi nghĩa Lam Sơn với lực lượng ban đầu chỉ khoảng vài nghìn người.' \
-        'Thời gian đầu ông hoạt động ở vùng thượng du Thanh Hóa, quân Minh đã huy động lực lượng tới hàng vạn quân để đàn áp,' \
-        'nhưng bằng chiến thuật trốn tránh hoặc sử dụng chiến thuật phục kích và hòa hoãn, nghĩa quân Lam Sơn đã dần lớn mạnh.'
-
-qa = model.generate_qa(input)
-
-print(qa)
-
-[
-  ('Quân Minh đã sử dụng chiến thuật nào để đánh quân vào vùng thượng du Thanh Hóa?','huy động lực lượng tới hàng vạn quân')
-  ('Có bao nhiêu cuộc khởi nghĩa của người Việt chống lại quân Minh?', 'nhiều cuộc khởi nghĩa của người Việt nổ ra'),
-  ('Lê Lợi đã làm gì vào năm 1418?', 'tổ chức cuộc khởi nghĩa Lam Sơn'),
-]
-```
-
-
-### Multitask / End-to-End model
+### Multitask model
 - **Sinh QAG với Multitask và End2End Models:** Các mô hình **Multitask** được huấn luyện để vừa **sinh câu trả lời** vừa **sinh câu hỏi**, có khả năng **sinh trực tiếp các cặp câu hỏi – câu trả lời** cùng lúc.Và sử dụng **một mô hình duy nhất**, nên chỉ cần truyền tham số ```model``` là đủ.
 
 ```python
