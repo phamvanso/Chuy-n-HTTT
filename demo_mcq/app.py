@@ -7,7 +7,7 @@ Chạy:
     streamlit run app.py
 """
 
-import os, random, json, time, copy, base64
+import os, random, json, time, copy
 from pathlib import Path
 from typing import List, Dict, Optional
 
@@ -27,44 +27,27 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Background image config
-BG_IMAGE_PATH = Path(__file__).resolve().parent.parent / "assets" / "918414.jpg"
-BG_IMAGE_OPACITY = 0.2  # 0.0 = an het anh, 1.0 = ro net anh
-
-
-def _read_base64_image(path: Path) -> str:
-    """Doc anh local va tra ve chuoi base64 de gan vao CSS."""
-    try:
-        return base64.b64encode(path.read_bytes()).decode("ascii")
-    except OSError:
-        return ""
-
-
-_bg_b64 = _read_base64_image(BG_IMAGE_PATH)
-_bg_overlay = max(0.0, min(1.0, 1.0 - BG_IMAGE_OPACITY))
-
 # ══════════════════════════════════════════════════════════════
 # CSS
 # ══════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
 /* ── tổng thể ── */
-[data-testid="stAppViewContainer"] { background: #f7f9fc; }
-[data-testid="stSidebar"]          { background: #ffffff; border-right: 1px solid #e5e7eb; }
+[data-testid="stSidebar"]          { border-right: 1px solid rgba(128, 128, 128, 0.25); }
 
 /* ── card câu hỏi ── */
 .mcq-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--secondary-background-color);
+    border: 1px solid rgba(128, 128, 128, 0.25);
     border-left: 4px solid #3b82f6;
     border-radius: 10px;
     padding: 18px 22px 14px 20px;
     margin-bottom: 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
 }
 .mcq-card.selected { border-left-color: #10b981; }
-.mcq-q  { font-size: 1.05rem; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
-.opt    { font-size: .97rem; padding: 3px 0; color: #374151; }
+.mcq-q  { font-size: 1.05rem; font-weight: 700; color: var(--text-color); margin-bottom: 10px; }
+.opt    { font-size: .97rem; padding: 3px 0; color: var(--text-color); }
 .opt-correct { color: #16a34a; font-weight: 700; }
 
 /* ── stage badge ── */
@@ -79,42 +62,24 @@ st.markdown("""
 
 /* ── preview panel ── */
 .preview-box {
-    background: #f0fdf4; border: 1px solid #bbf7d0;
+    background: var(--secondary-background-color);
+    border: 1px solid rgba(128, 128, 128, 0.25);
     border-radius: 8px; padding: 14px 16px; font-size: .9rem;
     white-space: pre-wrap; font-family: monospace;
 }
 
 /* ── stage info ── */
 .stage-info {
-    background: #eff6ff; border: 1px solid #bfdbfe;
+    background: var(--secondary-background-color);
+    border: 1px solid rgba(128, 128, 128, 0.25);
     border-radius: 8px; padding: 10px 14px;
-    font-size: .88rem; color: #1e40af; margin-bottom: 12px;
+    font-size: .88rem; color: var(--text-color); margin-bottom: 12px;
 }
 
 /* ── button full-width ── */
 div[data-testid="stButton"] > button { width: 100%; }
 </style>
 """, unsafe_allow_html=True)
-
-if _bg_b64:
-    st.markdown(
-        f"""
-<style>
-[data-testid="stAppViewContainer"] {{
-    background:
-        linear-gradient(
-            rgba(247, 249, 252, {_bg_overlay:.3f}),
-            rgba(247, 249, 252, {_bg_overlay:.3f})
-        ),
-        url("data:image/jpeg;base64,{_bg_b64}");
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-}}
-</style>
-""",
-        unsafe_allow_html=True,
-    )
 
 # ══════════════════════════════════════════════════════════════
 # Constants & helpers
@@ -553,7 +518,7 @@ with col_main:
 
     if mcq_list:
         st.divider()
-        st.markdown(f"#### ✏️ Bước 3 – Xem và chỉnh sửa ({len(mcq_list)} câu)")
+        st.markdown(f"#### Bước 3 – Xem và chỉnh sửa ({len(mcq_list)} câu)")
         editor_version = st.session_state["editor_version"]
 
         # Thanh hành động nhanh: batch operations cho nhiều câu
@@ -811,7 +776,7 @@ with col_preview:
 
         # ── Bảng đáp án ───────────────────────────────────────
         # Hiển thị bảng markdown: Câu | Đáp án
-        st.markdown("##### 🔑 Bảng đáp án")
+        st.markdown("##### Bảng đáp án")
         ans_md = "| Câu | Đáp án |\n|---|---|\n"
         for i, m in enumerate(export_list, 1):
             ans_md += f"| {i} | **{m['correct_label']}**. {m['answer']} |\n"
@@ -827,36 +792,6 @@ with col_preview:
             if st.button("Chọn tất cả & preview"):
                 st.session_state["selected"] = set(range(len(mcq_list)))
                 st.rerun()
-
-
-# ══════════════════════════════════════════════════════════════
-# CSS tùy chỉnh
-# ══════════════════════════════════════════════════════════════
-st.markdown("""
-<style>
-    .mcq-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 18px 22px;
-        margin-bottom: 16px;
-    }
-    .mcq-question { font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; color: #1a202c; }
-    .opt-correct  { color: #16a34a; font-weight: 600; }
-    .opt-wrong    { color: #374151; }
-    .badge-backend {
-        display: inline-block;
-        padding: 2px 10px;
-        border-radius: 20px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        background: #dbeafe;
-        color: #1d4ed8;
-        margin-left: 6px;
-    }
-    .stButton>button { width: 100%; }
-</style>
-""", unsafe_allow_html=True)
 
 
 

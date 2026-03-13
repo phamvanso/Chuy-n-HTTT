@@ -46,7 +46,7 @@ copy .env.example .env    # Windows
 ```env
 VIQAG_MODEL=shnl/vit5-vinewsqa-qg-ae
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=llama3
+OLLAMA_MODEL=qwen2.5:7b
 ```
 
 ### Bước 4 – Khởi động Streamlit
