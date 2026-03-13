@@ -584,12 +584,13 @@ with col_main:
                     )
 
                 # Nội dung câu hỏi (có thể chỉnh sửa)
-                with st.expander(f"{mcq['question'][:80]}{'…' if len(mcq['question'])>80 else ''}", expanded=False):
+                with st.expander(mcq["question"], expanded=False):
                     # Edit question text
-                    new_q = st.text_input(
+                    new_q = st.text_area(
                         "Nội dung câu hỏi",
                         value=mcq["question"],
                         key=f"q_{editor_version}_{idx}",
+                        height=100,
                     )
                     if new_q != mcq["question"]:
                         st.session_state["mcq_list"][idx]["question"] = new_q
