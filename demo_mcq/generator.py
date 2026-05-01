@@ -43,16 +43,8 @@ logging.basicConfig(level=logging.WARNING)
 #                - Extract answers (AE) từ context
 #                - Generate questions (QG) cho từng answer
 DEFAULT_MODEL = "shnl/vit5-vinewsqa-qg-ae"
-
-# MAX_INPUT_LEN: Độ dài tối đa input cho tokenizer (512 tokens = ~300–400 từ)
-#                Nếu vượt sẽ bị cắt bỏ (truncation=True)
 MAX_INPUT_LEN = 512
-
-# MAX_OUTPUT_LEN: Độ dài tối đa output sinh ra từ model (VD: "Big data" = 2 tokens)
 MAX_OUTPUT_LEN = 128
-
-# HL_TOKEN: Token đặc biệt để highlight phần cần attention của model
-#           Format: "<hl> Big data <hl>" đưa model focus vào "Big data"
 HL_TOKEN = "<hl>"
 
 
@@ -152,32 +144,11 @@ def _split_sentences(text: str) -> List[str]:
 
 
 def _is_multitask(model_name: str) -> bool:
-    """
-    Detect xem model có hỗ trợ cả 2 task (QG + AE) hay chỉ 1 task (QG-only).
-    
-    Logic:
-    - Multitask model: Tên chứa cả từ "qg" (Question Generation) 
-                       VÀ "ae" (Answer Extraction)
-    - Pipeline model: Chỉ "qg" hoặc chỉ "ae"
-    
-    Ví dụ:
-    - "shnl/vit5-vinewsqa-qg-ae" → Tách: ["shnl", "vit5", "vinewsqa", "qg", "ae"]
-      → Có cả "qg" và "ae" → True (multitask)
-    - "namngo/pipeline-vit5-viquad-qg" → Tách: ["namngo", "pipeline", "vit5", "viquad", "qg"]
-      → Chỉ có "qg" → False (pipeline QG-only)
-    
-    Params:
-        model_name: Tên model HuggingFace hub (VD: "username/model-name-qg-ae")
-    
-    Returns:
-        True nếu multitask (có cả QG + AE)
-        False nếu pipeline (chỉ QG hoặc chỉ AE)
+    """Kiểm tra model_name có phải là multitask (QG + AE) hay không.
     """
     # Tách model_name theo dấu "-" hoặc "/" (convention của HF)
     # VD: "shnl/vit5-vinewsqa-qg-ae" → ["shnl", "vit5", "vinewsqa", "qg", "ae"]
     parts = re.split(r"[-/]", model_name.lower())
-    
-    # Check xem cả "qg" và "ae" đều có trong list parts
     return "qg" in parts and "ae" in parts
 
 
@@ -256,10 +227,11 @@ class QAGenerator:
                 legacy=False,
             )
 
-        # Thêm special token <hl> vào bộ từ điển (vocabulary) của Tokenizernếu chưa có
+        # Thêm special token <hl> vào bộ từ điển (vocabulary) của Tokenizer nếu chưa có
         if HL_TOKEN not in self._tokenizer.get_vocab():
             self._tokenizer.add_special_tokens({"additional_special_tokens": [HL_TOKEN]})
-
+        
+        #Tải Mô hình
         try:
             self._model = T5ForConditionalGeneration.from_pretrained(
                 self.model_name
@@ -268,7 +240,8 @@ class QAGenerator:
             self._model = AutoModelForSeq2SeqLM.from_pretrained(
                 self.model_name
             )
-
+        #Đồng bộ hóa kích thước của Mô hình (Model) với kích thước của Bộ tách từ (Tokenizer).
+        #tạo thêm một vector mới ở lớp Embedding để cấp chỗ trống cho token <hl>
         self._model.resize_token_embeddings(len(self._tokenizer))
 
         import torch
@@ -278,6 +251,7 @@ class QAGenerator:
             self._device_str = self.device
 
         self._model.to(self._device_str)
+        # train() (để huấn luyện) và eval() (để sử dụng)
         self._model.eval()
         mode = "multitask QG+AE" if self.multitask else "pipeline QG-only"
         print(f"[Generator] Model sẵn sàng trên '{self._device_str}' ({mode}).")
@@ -298,7 +272,6 @@ class QAGenerator:
         
         Beam Search: Dùng để tìm kết quả tốt nhất (không tham lam).
         - num_beams=4: Track 4 candidate sequences, chọn tối ưu nhất
-        - Càng nhiều beams → Tốt hơn nhưng chậm hơn
         
         Params:
             prompt: Chuỗi prompt gủi cho model (VD: "extract answers: [context]")
@@ -381,26 +354,22 @@ class QAGenerator:
         answers: List[str] = []  # Lưu answers hợp lệ
         seen: set = set()         # Tracking answers đã thêm (loại dup)
 
-        # ─ Tính số_candidates_per_câu ─
-        # VD: need=5 câu, có 10 câu → seqs_per_sent=1 (1 answer/câu)
-        #     need=10 câu, có 3 câu → seqs_per_sent=4 (4 answers/câu, max=4)
-        seqs_per_sent = max(1, -(-need // max(len(sentences), 1)))  # ceil division
-        seqs_per_sent = min(seqs_per_sent, 4)  # tối đa 4 (tránh OOM)
+        # ─ Tính số lần lặp
+        seqs_per_sent = max(1, -(-need // max(len(sentences), 1)))  # làm tròn
+        seqs_per_sent = min(seqs_per_sent, 4)  # tối đa 4
 
         # ─ Bước 1: Loop qua từng câu, sinh answers ─
         for sentence in sentences:
-            # Early stop nếu đã có quá đủ candidates (need * 2)
-            if len(answers) >= need * 2:
+            if len(answers) >= need * 2:  # đủ candidate rồi, dừng
                 break
             
             # Tìm vị trí câu trong context (để highlight)
             pos = context.find(sentence)
             if pos == -1:
-                continue  # Câu không tìm thấy? Skip (không nên xảy ra)
+                continue
             
             # ─ Bước 2: Highlight câu ─
             # Format: "[trước] <hl> [câu này] <hl> [sau]"
-            # Token <hl> báo cho model: "Focus vào phần giữa <hl>...<hl>"
             highlighted = (
                 context[:pos]
                 + f"{HL_TOKEN} {sentence} {HL_TOKEN}"
@@ -409,7 +378,6 @@ class QAGenerator:
             
             # ─ Bước 3: Gủi prompt "extract answers: [highlighted_context]" ─
             prompt = f"extract answers: {highlighted}"
-            # Sinh seqs_per_sent candidates (VD: 2 answers từ câu này)
             raws = self._infer(prompt, max_new_tokens=128, num_return_sequences=seqs_per_sent)
             
             # ─ Bước 4: Filter + Deduplicate ─
@@ -538,7 +506,6 @@ class QAGenerator:
                 ...
             ]
         """
-        # ─ Chuẩn bị: Clean context ─
         context = _clean(context)
         if not context:
             return []  # Rỗng → Return []
@@ -578,7 +545,7 @@ class QAGenerator:
         # STAGE 2: GENERATE QUESTIONS
         # ══════════════════════════════════════════════════════════════════════════════
         pairs: List[Dict[str, str]] = []  # Lưu Q-A pairs cuối cùng
-        seen_q: set = set()               # Tracking questions (loại dup)
+        seen_q: set = set()               # Tracking questions (loại trùng)
 
         for answer in answers:
             # ─ Early stop: Đủ pairs rồi ─

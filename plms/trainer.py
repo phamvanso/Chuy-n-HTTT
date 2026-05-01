@@ -370,7 +370,11 @@ class Trainer:
         for (i, o, p), cache_path in self.data_cache_paths:
             # Load dataset từ Hugging Face
             text_input, text_output = get_dataset(
-                self.config.dataset_path, self.config.dataset_name, split='train', input_type=i, output_type=o,
+                self.config.dataset_path, 
+                self.config.dataset_name, 
+                split='train', 
+                input_type=i, 
+                output_type=o,
                 use_auth_token=self.use_auth_token)
             
             # Tokenize và encode (có cache để tăng tốc)
